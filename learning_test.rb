@@ -1,5 +1,5 @@
 require 'test_helper'
-require 'action_view/helpers'
+
 
 # Use include to add modules
 
@@ -43,10 +43,10 @@ class LearningTest < ActiveSupport::TestCase
       assert_equal 2,y
 
       # Parentheses in parallel assignment. The lefthand side can use
-      # parentheses for subassignment. If two or more l-values are enclosed in
-      # parentheses, they are initially treated as a single l-value. When the
-      # corresponding r-value has been determined, the rules of parallel
-      # assignment are applied recursively.
+      #   parentheses for subassignment. If two or more l-values are enclosed in
+      #   parentheses, they are initially treated as a single l-value. When the
+      #   corresponding r-value has been determined, the rules of parallel
+      #   assignment are applied recursively.
       x,(y,z) = 3,[4,5]
       assert_equal 3, x
       assert_equal 4, y
@@ -82,27 +82,95 @@ class LearningTest < ActiveSupport::TestCase
 
     end
 
-    should "%:::formatting interpolation" do
-      assert_equal "9.50", ("%.2f" % 9.5)
+    should "unless::" do
+      # Unless means: execute the LEFT unless the RIGHT evaluates to TRUE #falsy
+      #   values => The right is true, the left executes
+      a = "not changed"; b = "changed"
+      
+      a = b unless false; assert_equal a,"changed"
+      a = b unless [];    assert_equal a,"changed"
+      a = b unless "";    assert_equal a,"changed"
+      a = b unless nil;   assert_equal a,"changed"
+      a = b unless {};    assert_equal a,"changed"
 
-      assert_equal "<p>hello</p>", ( "<%s>%s</%s>" % %w{p hello p} )
+      # truthy values => anything else, the left doesn't execute
+      a = "not changed"; b = "changed"
+
+      a = b unless true;  assert_equal a,"not changed"
+      a = b unless [3];   assert_equal a,"not changed"
     end
 
+    should "super:: Chaining" do
+      # It passes the arguments of the current method to the method with the
+      #   same name in the superclass. (The superclass doesn't have to define
+      #   it, it can inherit it from one of its ancestors.) It can be followed
+      #   by arguments.
+      #
+      # If you use super as a bare keyword, all the args passed to the current
+      # method are passed to the superclass method.
+      class Point
+        def initialize(x,y)
+          @x = x
+          @y = y
+        end
+      end
+
+      class Point3D < Point
+        def initialize(x,y,z)
+          super(x,y)
+          @z = z
+        end
+        def show
+          "" << "#{@x} " << "#{@y} " << "#{@z}"
+        end
+      end
+
+      p3d = Point3D.new(2,3,4)
+      assert_equal "2 3 4", p3d.show
+
+    end
+  end
+
+  context "Kernel" do
+    should "method_missing:: obj.method_missing(symbol [, *args] ) => result " do
+      # symbol is the symbol for the method called, and args are any arguments
+      #   that were passed to it
+      class Roman
+        def roman_to_int(str)
+          case str.to_s
+          when 'i'
+            1
+          when 'ii'
+            2
+          when 'iii'
+            3
+          end
+        end
+        def method_missing(method)
+          roman_to_int(method)
+        end
+      end
+
+      r = Roman.new
+      assert_equal 3, r.iii
+    end
   end
 
   context "Operators" do
-    should "||=:::" do
+    should "||=::" do
       def set_results(results = nil)
-        results ||= [] # same thing as: results = results || []
+        results ||= []
+        # same thing as: results = results || [] same thing as: results = [] if
+        #   results.nil?
       end
       assert_equal [], set_results
       assert_equal [], set_results(false)
       assert_equal [1,2,3], set_results([1,2,3])
     end
 
-    should "*::: The splat operator" do
+    should "*:: The splat operator" do
       # Uses Array Expansion Syntax. It lets us group together all remaining
-      # parameters into a single array variable
+      #   parameters into a single array variable
 
       # 1 - ASSIGNMENT: * expands r-value arrays and hashes
       pet1, pet2, pet3 = 'duck', *['dog','cat']
@@ -166,23 +234,29 @@ class LearningTest < ActiveSupport::TestCase
       assert_equal "holahola", repeated
     end
 
-    should "!!:::Double negation" do
+    should "!!::Double negation" do
       # Used to force an object into an explicit true/false. Usually not
       # necessary
       def is_this_true?
         @fishy_variable
       end
       @fishy_variable = nil
-      assert !@fishy_variable, "The variable is evaluated as false"
+      assert_false @fishy_variable, "The variable is evaluated as false"
       assert_not_equal false, !@fishy_variable, "Even thought it isn't actually <false>"
       assert_equal false, !!@fishy_variable, "The double negation coerces it into <false>"
 
     end
 
-    should "<<::: Append altering the left operand" do
+    should "<<:: Append altering the left operand" do
       greeting = "A bananeira"
       greeting << " caiu"
       assert_equal "A bananeira caiu", greeting
+    end
+    
+    should "%::formatting interpolation" do
+      assert_equal "9.50", ("%.2f" % 9.5)
+
+      assert_equal "<p>hello</p>", ( "<%s>%s</%s>" % %w{p hello p} )
     end
   end
 
@@ -191,7 +265,7 @@ class LearningTest < ActiveSupport::TestCase
       class Point
       end
     end
-    should "Singleton:::" do
+    should "Singleton::" do
       # Singleton Method - Method that is defined for only a single object
       # rather than a class of objects.
       def Point.sum
@@ -202,7 +276,7 @@ class LearningTest < ActiveSupport::TestCase
       #
     end
 
-    should "Eigenclass:::" do
+    should "Eigenclass::" do
       # The singleton methods of an object are instance methods of the anonymous
       # eigenclass (also called singleton class) associated with that object.
       class << Point # open the eigenclass of the object Point
@@ -223,7 +297,7 @@ class LearningTest < ActiveSupport::TestCase
       end
     end
 
-    should "define_method(meth_name, meth_body)::: Defines an instance method in the receiver" do
+    should "define_method(meth_name, meth_body):: Defines an instance method in the receiver" do
       # It expects a Symbol as meth_name and it creates a method with that name,
       # using the associated "block" as the method body. Instead of a block, it
       # can also be a Proc or a Method object. The block is evaluated using
@@ -244,7 +318,7 @@ class LearningTest < ActiveSupport::TestCase
 
   end
 
-  context "Modules" do
+  context "Module" do
     # Modules are classes that can't be instantiated or subclassed. They can be
     # used as namespaces (to group related methods or constants) and as mixins
     # (to include instance methods in classes).
@@ -256,7 +330,7 @@ class LearningTest < ActiveSupport::TestCase
         def a_class_method; self ;end
       end
     end
-    should "include::: and extend::: " do
+    should "include:: and extend:: " do
       # include: Adds module methods as INSTANCE METHODS
       #
       # extend: Adds all module methods ONLY TO THE INSTANCE it's called on.
@@ -281,7 +355,7 @@ class LearningTest < ActiveSupport::TestCase
       assert_equal Object, obj_instance.an_instance_method
     end
 
-    should "include::: and extend::: simplified" do
+    should "include:: and extend:: simplified" do
       module InstanceMethodsWithExtend
         def self.included(base) # base is also called klass
           base.extend(ClassMethods)
@@ -296,10 +370,16 @@ class LearningTest < ActiveSupport::TestCase
       assert_equal MyClass, MyClass.a_class_method
     end
     
-    should "require:::" do
+    should "require::" do
       # It's used for loading non-module Ruby sources. You may need to include
       # after requiring.
     end
+  
+    should "const_get:: mod.const_get(sym) => obj" do
+      # Returns the value of the named constant in mod.
+      assert_equal 3, Math.const_get(:PI).truncate
+    end
+
   end
 
   context "Literals" do
@@ -344,6 +424,8 @@ termina_con_esto
       # Interpolation %W
       assert_equal [' '], %W(\s)
       assert_equal ["\s"], %W(\s)
+      a = 3
+      assert_not_equal 3, %W( a ), %q(it doesn't work, you have to use #{a})
     end
   end
 
@@ -352,7 +434,8 @@ termina_con_esto
     # manipulated as objects. It's possible to create an object that represents
     # a block: a proc or a lambda.
     should "not assign a block to a variable" do
-      # my_block = { |x| x*x } #=> SyntaxError
+      # my_block = { |x| x*x } #=> SyntaxError use this instead: my_block =
+      # lambda{ |x| x*x } my_block.call
     end
     
     should "yield to a block inside a method" do
@@ -365,10 +448,10 @@ termina_con_esto
       end
 
       assert send_a_number(4) { |x| x > 3}
-      assert !send_a_number(2) { |x| x > 3}
+      assert_false send_a_number(2) { |x| x > 3}
     end
 
-    should "refer to outer variables, not inner" do
+    should "a block refers to outer variables, not inner" do
       def execute_the_block_three_times_with_local_variable
         my_var = 100 #var in the context from which it is called
         yield
@@ -380,41 +463,40 @@ termina_con_esto
       assert_equal 8, my_var
     end
 
-    should "Proc.new::: Creating procs explicitely" do
-      # Procs have block-like behavior, theyare objects. They can be assigned to
-      # variables.
-      def save_for_later_regular(&block)
-        @saved_block_regular = block
-      end
-      def save_for_later_new_proc(&block)
-        @saved_block_new_proc = Proc.new(&block)
-      end
-      save_for_later_new_proc { 1..3 }
-      save_for_later_regular { 1..3 }
-      assert_equal 1..3, @saved_block_new_proc.call
-      assert_equal 1..3, @saved_block_regular.call
-      assert_equal @saved_block_new_proc.call, @saved_block_regular.call, "Inside the fn block == Proc.new(&block)"
-    end
-
-    should "&::: creates procs implicitely. It converts Blocks into Procs and viceversa" do
+    should "&:: creates procs implicitely. It converts Blocks into Procs and viceversa" do
       def convert_block_to_proc(&block)# The unary ampersand operator
         block
       end
 
       external_proc = convert_block_to_proc { |x|  x > 3 }
 
-      assert external_proc.call(4), "I call a proc sending it an argument which gest evaluated in the block"
-      assert !external_proc.call(1), "I call a proc sending it an argument which gest evaluated in the block"
+      assert external_proc.call(4), "the block returns true"
+      assert_false external_proc.call(1), "the block returns false"
 
       assert_raise ArgumentError do
-        [1,4,7].any?(external_proc) # any? expects a block
+        [1,4,7].any? external_proc # any? expects a block and we're sending it a proc
       end
 
       assert [1,4,7].any?(&external_proc), "We turn the proc back into a block"
-
+    end
+    
+    should "Proc:: convert block to proc: proc { |...| block } => a_proc" do
+      # Procs have block-like behavior, they are objects. They can be assigned
+      # to variables.
+      def convert_block_to_proc_using_ampersand(&block)
+        block
+      end
+      def convert_block_to_proc_using_proc_new(&block)
+        Proc.new(&block)
+      end
+      proc_with_ampersand = convert_block_to_proc_using_ampersand { "&" }
+      proc_with_proc_new = convert_block_to_proc_using_proc_new { "Proc.new()" }
+      assert_equal "&", proc_with_ampersand.call
+      assert_equal "Proc.new()", proc_with_proc_new.call
     end
 
-    should "Proc.call::: We can save a block as a proc and call it later" do
+
+    should "Proc.call:: We can save a block as a proc and call it later" do
       # Calling a proc is like yielding to a block
       def save_for_later(&block)
         @saved_block_as_proc = block # note, no &.
@@ -423,48 +505,67 @@ termina_con_esto
       assert_equal 1..3, @saved_block_as_proc.call
     end
 
-    should "defined?::: checks if a variable is defined" do
-      assert !defined? d, "d is not defined"
+    should "defined?:: checks if a variable is defined" do
+      assert_false defined?(d), "d is not defined"
     end
 
-    should "block_given?::: checks to see if a block is sent along with the call to the function" do
+    should "block_given?:: checks to see if a block is sent along with the call to the function" do
       def did_you_pass_me_a_block?()
-        if block_given?
-          yield
-        else
-          "No block"
-        end
+        block_given? ? yield : "No block"
       end
 
       assert_equal "No block", did_you_pass_me_a_block?
-      assert_equal "I passed you a block", did_you_pass_me_a_block? { 'I passed you a block' }
-      proc = Proc.new { 'I passed you a proc' }
-      assert_equal "I passed you a proc", did_you_pass_me_a_block?(&proc)
+      assert_equal "Yes, I did", did_you_pass_me_a_block? { 'Yes, I did' }
+      proc = Proc.new { 'Not really. I passed you a proc' }
+      assert_equal "Not really. I passed you a proc", did_you_pass_me_a_block?(&proc)
     end
 
-    should "to_proc:::" do
+    should "to_proc::" do
       # If you send something that isn't a Proc to the & unary op. It will try
       # to convert it into a proc by using its to_proc method, and then convert
       # it into a block
 
     end
 
-    should "Lambda:::" do
+    should "Lambda:: lambda { |...| block } => a_proc" do
       # Lambdas have method-like behavior, but they are instances of class Proc.
-      # Calling a lambda is like invoking a method.
+      # Calling a lambda is like invoking a method. Equivalent to Proc.new, but
+      # they don't check the number of parameters passed when called.
+
       saved_proc_with_error = Proc.new { return 3 }
       assert_raise LocalJumpError do
-        saved_proc_with_error.call # Can't call a proc that returns
+        saved_proc_with_error.call # Can't call a proc that returns a value
       end
 
-      saved_proc = Proc.new { 3 } # remove the return, or use a lambda
+      # either remove the return, or use a lambda
+      saved_proc = Proc.new { 3 } # remove the return
       assert_equal 3, saved_proc.call
       
-      saved_lambda = lambda { return 3 } # lambdas can return
+      saved_lambda = lambda { return 3 } # Using a lambda
       assert_equal 3, saved_lambda.call
     end
 
-    should "Method:::" do
+    should "Lambda checks number of params, Proc doesn't" do
+      checks_params = lambda { |one, two| "two params" }
+      assert_raise ArgumentError do
+        checks_params.call(1,2,3)
+      end
+      
+      does_not_check_params = Proc.new { |one, two| "two params" }
+      assert_equal "two params", does_not_check_params.call(1,2,3)
+    end
+
+    should "block-arguments::" do
+      # #block-arguments are like regular arguments. They get assigned when the
+      # lambda is called
+      methods = %w( upcase! chop! )
+      var = "hola"
+      block = lambda { |responder| methods.each { |method| responder.send(method) } }
+      block.call(var) # var becomes "responder" block-argument.
+      assert_equal "HOL", var
+    end
+
+    should "Method::" do
       # A Method object is not a closure. The only binding retained by a Method
       # object is the value of self—the object on which the method is invoked
     end
@@ -472,19 +573,21 @@ termina_con_esto
   end
 
   context "Iterators" do
-    should "Array.map::: also called Enum.collect" do
+    should "Array.map:: also called Enum.collect" do
       # map is an iterator that invokes the block that follows it once for each
       # element in the array.
       assert_equal [1,4,9], [1,2,3].map { |x| x*x }, "Array"
       assert_equal [2,4,6], (1..3).map { |x| x*2 }, "Range"
+      assert_equal [2,3,4], [1,2,3].map(&:succ)
     end
 
-    should "inject:::" do
+    should "inject::" do
       # Invokes the associated block with two arguments. The first argument is
-      # an accumulator from previous iterations. The second is the next element.
-      # The return value becomes the first block-argument for the next iteration
-      # (except for the last iteration). The initial value of the accumulator is
-      # either the arg to inject, or the first element of the enumerable object.
+      # an accumulator convert previous iterations. The second is the next
+      # element. The return value becomes the first block-argument for the next
+      # iteration (except for the last iteration). The initial value of the
+      # accumulator is either the arg to inject, or the first element of the
+      # enumerable object.
       data = [2,5,3,4]
       sum = data.inject { |sum, current_value| sum + current_value}
       assert_equal 2 + 5 + 3 + 4, sum
@@ -509,17 +612,17 @@ termina_con_esto
 
       # inject an array
       nested_hash ={%w( à ä á) => 'a', %w( é è ê ë) => 'e'}
-      from, to = nested_hash.inject(['','']) do |array,(key,value)| # array,(key,value) = ['',''], *{['à','ä','á'] => 'a'}
+      convert, to = nested_hash.inject(['','']) do |array,(key,value)| # array,(key,value) = ['',''], *{['à','ä','á'] => 'a'}
         array[0] << key * ''
         array[1] << value * key.size
         array
       end
-      assert_equal 'àäáéèêë',from
+      assert_equal 'àäáéèêë',convert
       assert_equal 'aaaeeee',to
 
     end
 
-    should "each:::" do
+    should "each::" do
       hash = { :hola => 'oi', :adios => 'adeus'}
       joined_hash = ""
       hash.each { |key,value| joined_hash += (key.to_s + value)} # key, value = [key, value] parallel assignment
@@ -533,7 +636,11 @@ termina_con_esto
 
   context "Array" do
 
-    should "join:::" do
+    should "creation" do
+      assert_equal [3], Array(3) # Weird syntax I've seen
+    end
+
+    should "join::" do
       assert_equal "a-b-c", %w(a b c).join("-")
       assert_equal "a-b-c", %w(a b c) * "-", "see the splat operator"
       assert_equal "A-B-C", %w(a b c).collect{ |letra| letra.upcase! }.join("-")
@@ -544,14 +651,14 @@ termina_con_esto
     setup do
       @vehicles_hash = { :cars => 36, :boats => 8, :trains => 12, :planes => 21 }
     end
-    should "select:::" do
+    should "select::" do
       # Returns a new ARRAY consisting of [key,value] pairs for which the block
       # returns true
       vehicles_array = [[:cars, 36], [:planes, 21]]
       assert_same_elements vehicles_array, @vehicles_hash.select { |key, value| value > 20 }
     end
 
-    should "values_at:::" do
+    should "values_at::" do
       # Return an array containing the values associated with the given keys
       assert_equal [36, 8], @vehicles_hash.values_at(:cars, :boats)
     end
@@ -577,23 +684,65 @@ termina_con_esto
     # sort)
     #
     # Classes that implement each: Array, Hash, Range, String
-    should "each:::" do
+    should "each::" do
       #      (5..10).each
     end
 
-    should "any?::: enum.any? [{|obj| block } ] => true or false" do
+    should "any?:: enum.any? [{|obj| block } ] => true or false; ^::" do
       # Passes each element of the collection to the given block and it returns
       # TRUE if at least ONE of the collection members is not false or nil. It
-      # expects a block
-      assert %w( ant bear cat ).any? {|word| word.length >= 3} # false true false => TRUE
+      # expects a block. If no block is passed any? returns TRUE if at least one
+      # element is not nil
+      assert %w( ant bear cat ).any? {|word| word.length >= 3}
+
+      def received_arguments?(*args)
+        args.any?
+      end
+      assert received_arguments?(1,2,"hola")
+      assert_false received_arguments?
+      
+      assert %w( ant bear cat ).any? ^ nil # ^ is xor:  t ^ f => TRUE
+      assert [].any? ^  "block" #                       f ^ t => TRUE
+      assert_false %w( ant bear cat ).any? ^ "block" #  t ^ t => FALSE
 
     end
 
     
   end
 
+  context "Range" do
+    should "include?:: Check if an item belongs to a range or an array" do
+      assert((1..100).include?(79))
+      assert([1,50,79,100].include?(79))
+    end
+  end
+
+  context "Set" do
+    # #A set is a collection ov values without duplicates. The elements have no
+    # order. A hash is a set of k/v pairs.
+
+    should "to_set:: Creating Any Enumerable can be converted to a Set" do
+      assert_equal Set[5,1,2,3,4], (1..5).to_set
+      assert_equal Set[1,2,5], [1,2,5].to_set
+      assert_equal Set[1,2,5], Set.new([1,2,5])
+      assert_equal Set[2,3,4], Set.new([1,2,3]) { |x| x+1 }
+    end
+
+    should "&:: ^:: |:: -:: <<:: Set Operations" do
+      primes = Set[2,3,5,7]
+      odds = Set[1,3,5,7,9]
+
+      assert_equal Set[5,7,3], primes & odds, "Intersection"
+      assert_equal Set[5,7,3,1,2,9], primes | odds, "Union"
+      assert_equal Set[2], primes - odds, "Difference"
+      assert_equal Set[1,2,9], primes ^ odds, "Mutual Exclusion: (a|b) - (a&b) "
+
+      assert_equal Set[2,3,5,7,11], primes << 11, "Add item"
+    end
+  end
+
   context "Object" do
-    should "blank?:::" do
+    should "blank?::" do
       # object is blank if it’s false, empty, or a whitespace string. This
       # simplifies: if !address.nil? && !address.empty? to: if !address.blank?
       assert ''.blank?
@@ -602,21 +751,28 @@ termina_con_esto
       assert " ".blank?
       assert [].blank?
       assert nil.blank?
-      empty_hash = {}
-      assert empty_hash.blank?
+      assert(({}).blank?)
+      assert Hash[].blank?
     end
 
-    should "respond_to?::: obj.respond_to?(symbol, include_private=false) => true or false" do
+    should "respond_to?:: obj.respond_to?(symbol, include_private=false) => true or false" do
       # Returns true if obj responds to the given method.
-      assert !(3.respond_to? :upcase)
-      assert "hola".respond_to? :upcase
+      assert_false 3.respond_to?(:upcase)
+      assert "hola".respond_to?(:upcase)
     end
+
+    should "send:: obj.send(symbol [, args...]) => obj" do
+      # Invokes the method identified by symbol, passing it any arguments
+      # specified.
+      assert_equal 4, 3.send(:succ)
+    end
+
   end
 
   context "ActiveSupport" do
-    should "extract_options!:::" do
-      # Extracts options from a set of arguments. Removes and returns the last
-      # element in the array if it’s a hash, otherwise returns a blank hash
+    should "extract_options!::" do
+      # Removes and returns the last element in the array if it’s a hash,
+      # otherwise returns a blank hash {}
       def show_options(*args)
         args.extract_options!
       end
@@ -628,35 +784,4 @@ termina_con_esto
 end
 
 
-class LearningTestView < ActionView::TestCase
-  context "ActionView" do
-    context "Helpers" do
-      should "content_for:::" do
-        # Calling content_for stores a block of markup in an identifier for
-        # later use. You can make subsequent calls to the stored content in
-        # other templates or the layout by passing the identifier as an argument
-        # to yield.
-        content_for :name do
-          3
-        end
-        assert_equal "3", @content_for_name
-      end
 
-      should "javascript_include_tag(*sources):::" do
-        # Returns an HTML script tag for each of the sources provided. You can
-        # pass 1-the filename (w or w/o ext), 2-the full path (relative to your
-        # document root). You can modify the html attrs of the SCRIPT tag by
-        # passing a hash as the last argument. full path javascript_include_tag
-        # "http://www.railsapplication.com/xmlhr" #changing the src attr of
-        # SCRIPT #javascript_include_tag "common.javascript", "/elsewhere/cools"
-      end
-
-      should "content_tag:::content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)" do
-        # Returns an HTML block tag of type name surrounding the content.
-        # Instead of passing the content as an argument, you can also use a
-        # block in which case, you pass your options as the second parameter
-      end
-
-    end
-  end
-end
