@@ -159,13 +159,13 @@ class RubyTest < ActiveSupport::TestCase
         begin
           return_value = increase_number(number) and return return_value  #successful
           # If the below executes, something went wrong.
-        rescue 
-          return -1
+        rescue ArgumentError => e
+          return e.class
         end
       end
 
       assert_equal 3, increment(2)
-      assert_equal(-1, increment("error"), "It wasn't a number")
+      assert_equal(ArgumentError, increment("error"), "It wasn't a number")
     end
 
     should "for...in..." do
@@ -386,6 +386,65 @@ class RubyTest < ActiveSupport::TestCase
         end
       end
     end
+
+    should "method visibility public:: private:: protected::" do
+      # methods are normally public (except the initialize method, which is
+      # private).
+
+      # private methods are implicitely invoked on self, and may not be
+      # explicitly invoked on an object.
+
+      # public, private and protected only apply to methods. Instance & class
+      # variables are encapsulated and thus, behave as private (the only way to
+      # make an instance variable accessible from outside a class is defining an
+      # accessor method). Constants behave as public (there is no way of making
+      # them unaccessible to outside use).
+
+
+      # A protected method is like a private method (it can only be invoked from
+      # within the implementation of a class or its subclasses) but it may be
+      # explicitely invoked on any instance of the class.
+      #
+      class Esquiva
+        def patada(esq) esq.esquivar end
+
+        protected
+        def esquivar() "esquivando" end
+
+      end
+      esq1 = Esquiva.new
+      esq2 = Esquiva.new
+
+      assert_equal "esquivando", esq1.patada(esq2), "Calling protected method"
+      assert_raise NoMethodError do
+        esq1.esquivar # esquivar is protected
+      end
+
+      #      def safe_send(receiver, method, message) # regular send bypasses visibility rules
+      #        eval "receiver.#{method}"  # receiver.method
+      #      rescue => e
+      #        puts "#{message}: #{e}"    # This is my message: NoMethodError
+      #      end
+      #
+      #      visibility = ARGV.shift || "public"
+      #
+      #
+    end
+
+    should "Subclassing <:: or inheritance" do
+      # Used to extend a class with the methods in another class. When we define
+      # a class, we may specify that it extends—or inherits from—another class,
+      # known as the superclass.
+      #
+      # class Gem < Ruby     #=> Gem is a subclass of Ruby. Ruby is the superclass of Gem
+      # If you do not specify a superclass, the class implicitly extends Object.
+
+      # < is a boolean operator
+      assert String < Comparable, "String inherits from Comparable"
+
+      assert_false String < Integer, "String doesn't inherit from Integer"
+    end
+
   end
 
   context "Module" do
@@ -404,6 +463,9 @@ class RubyTest < ActiveSupport::TestCase
       # include: Adds module methods as INSTANCE METHODS.
       #
       # extend: Adds all module methods ONLY TO THE INSTANCE it's called on.
+      #
+      # If you want to access a method defined inside a class
+      
 
       class MyClass
         include InstanceMethods
@@ -587,7 +649,7 @@ termina_con_esto
       
     should "Proc:: Pass a Proc as an argument" do
       # Calling a proc is like yielding to a block
-      Array.class_eval do 
+      Array.class_eval do
         def iterate!(code) # note, no &. A Proc is just a regular parameter
           self.each_with_index do |n,i|
             self[i] = code.call(n)
@@ -657,7 +719,7 @@ termina_con_esto
         Proc.new { return "Proc.new"}.call #stop here
         return "proc_return method finished"
       end
-      def lambda_return 
+      def lambda_return
         lambda { return "lambda"}.call
         return "lambda_return method finished" #stop here
       end
@@ -763,7 +825,7 @@ termina_con_esto
   context "Array" do
 
     should "creation" do
-      assert_equal [3], Array(3) # Weird syntax I've seen
+      assert_equal [3], Array(3) # Alternative syntax
     end
 
     should "join::" do
@@ -803,6 +865,27 @@ termina_con_esto
       assert_equal Hash[:b => 200], h1
     end
 
+    should "shift::" do
+      # removes a key-value pair from the hash and returns it as a two-item
+      # array (or the hash's default value, if it's empty)
+      h = { 1 => 'a', 2 => 'b', 3 => 'c'}
+      item = h.shift
+      assert_equal [1,'a'], item
+      assert_equal(({2 => 'b', 3 => 'c'}), h)
+    end
+
+    should "symbolize_keys::" do
+      # Return a new hash with all keys converted to symbols.
+       foo = { 'name' => 'Gavin', 'wife' => :Lisa }
+       assert_equal(({ :name => 'Gavin', :wife => :Lisa }), foo.symbolize_keys)
+    end
+
+    should "stringify_keys::" do
+      # Return a new hash with all keys converted to strings.
+       foo = { :name => 'Gavin', :wife => :Lisa }
+       assert_equal(({ 'name' => 'Gavin', 'wife' => :Lisa }), foo.stringify_keys)
+
+    end
   end
 
   context "String" do
@@ -906,6 +989,17 @@ termina_con_esto
       # Invokes the method identified by symbol, passing it any arguments
       # specified.
       assert_equal 4, 3.send(:succ)
+
+      #  Send bypasses method visibility constraints, it can invoke private and protected methods.
+      class A
+        def private_abada; 3; end
+        private :private_abada
+      end
+      a = A.new
+      assert_raise NoMethodError do
+        a.private_abada
+      end
+      assert_equal 3, a.send(:private_abada), "Bypassing visibility rules"
     end
 
   end
@@ -971,8 +1065,8 @@ termina_con_esto
     end
 
     should "Always use simbols if you can" do
-      assert 5.respond_to? "to_f", "Ruby is casting it to a symbol, why waste memory?"
-      assert 5.respond_to? :to_f, "Better"
+      assert 5.respond_to?("to_f"), "Ruby is casting it to a symbol, why waste memory?"
+      assert 5.respond_to?(:to_f), "Better"
     end
   end
 
@@ -1042,8 +1136,9 @@ termina_con_esto
       assert_equal 10, Fixnum.ten
     end
 
-    should "class_eval:: include?::" do
-      # Evaluates a string or block in the context of the receiver
+    should "class_eval:: include?:: mod.class_eval(string [, filename [, lineno]]) => obj" do
+      # filename and lineno set the text for error messages Evaluates a string
+      # or block in the context of the receiver
       assert_equal 1, Demo.class_eval{ @@x = 1 }
       assert_equal 1, Demo.class_eval{ @@x }
 
@@ -1074,11 +1169,11 @@ termina_con_esto
     should "check whether a module includes another" do
       module M1 ; end
       module M2 ; include M1 ; end
-      assert M2.include? M1
+      assert M2.include?(M1)
     end
 
     should "An object or class should know its public and private methods" do
-      assert 5.respond_to? :"+", "Public"
+      assert 5.respond_to?(:"+"), "Public"
       assert Fixnum.respond_to?(:include, true), "Private"
       
       assert_false Fixnum.respond_to?(:include), "Private"
@@ -1092,18 +1187,13 @@ termina_con_esto
       assert_contains Fixnum.included_modules, Kernel
     end
 
-    should "A class should know its hierarchy" do
-      assert String < Comparable, "String inherits from Comparable"
-      assert_false String < Integer, "String doesn't inherit from Integer"
-    end
-
     should "An object should find all its methods" do
       assert_contains 5.methods, "+"
     end
 
     should "A class should know its public, private and singleton methods" do
       assert_contains String.public_instance_methods, "upcase!"
-      assert String.public_method_defined? :upcase!
+      assert String.public_method_defined?(:upcase!)
 
       assert_contains String.private_instance_methods, "initialize"
       assert_contains String.singleton_methods, "method_added"
@@ -1112,7 +1202,9 @@ termina_con_esto
     should "An object should know its instance variables, public, private methods" do
       d = Date.new
       assert_contains d.instance_variables, "@of"
-      assert d.instance_variable_defined? "@of"
+      assert d.instance_variable_defined?(:@of)
+
+      assert_equal 0, d.instance_variable_get(:@of) #remember to send text, not the variable
 
       assert_contains d.public_methods, "between?"
       assert_does_not_contain d.public_methods(false), "between?", "Exclude inherited methods"
@@ -1122,6 +1214,43 @@ termina_con_esto
 
   end
 end
+ 
 
 
+class ViewsTest < ActionView::TestCase
+  context "Helpers" do
+    should "content_for::" do
+      # Calling content_for stores a block of markup in an identifier for later
+      # use. You can make subsequent calls to the stored content in other
+      # templates or the layout by passing the identifier as an argument to
+      # yield.
+      content_for :name do
+        3
+      end
+      assert_equal "3", @content_for_name
+    end
 
+    should "javascript_include_tag(*sources)::" do
+      # Returns an HTML script tag for each of the sources provided. You can
+      # pass 1-the filename (w or w/o ext), 2-the full path (relative to your
+      # document root). You can modify the html attrs of the SCRIPT tag by
+      # passing a hash as the last argument.
+
+      assert_dom_equal('<script type="text/javascript" src="/javascripts/xmlhr.js"></script>',
+        javascript_include_tag("xmlhr"), "No extension")
+    end
+
+    should "content_tag::content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)" do
+      # Returns an HTML block tag of type name surrounding the content. Instead
+      # of passing the content as an argument, you can also use a block in which
+      # case, you pass your options as the second parameter
+      assert_equal '<div class="strong"><p>Hello world!</p></div>',
+          content_tag(:div, content_tag(:p, "Hello world!"), :class => "strong")
+      active_item = true
+      assert_equal '<div class="active">Hello World</div>',
+          content_tag(:div, "Hello World", :class => ("active" if active_item ))
+    end
+
+ 
+  end
+end
