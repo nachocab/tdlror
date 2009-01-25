@@ -257,9 +257,11 @@ class RubyTest < ActiveSupport::TestCase
       end
       assert_equal "Africa", determine_continent("ñu")
 
-      # 6 - Array#* == Array#join if supplied a string
+      # 6 - Array#* operates as Array#join if supplied a string. If give a
+      #   number, it does repetition
       array = %w( join this sentence )
       assert_equal "join—this—sentence", ( array * '—')
+      assert_equal [0,0,0,0,0], [0] * 5
 
       # 7 - Define methods that take an unlimited number of arguments
       def method_with_unlimited_arguments(*args)
@@ -288,7 +290,7 @@ class RubyTest < ActiveSupport::TestCase
 
     end
 
-    should "<<:: Append altering the left operand" do
+    should "String#<<:: Append altering the left operand (also Array#<< and Set#<<)" do
       greeting = "A bananeira"
       greeting << " caiu"
       assert_equal "A bananeira caiu", greeting
@@ -436,8 +438,9 @@ class RubyTest < ActiveSupport::TestCase
       # a class, we may specify that it extends—or inherits from—another class,
       # known as the superclass.
       #
-      # class Gem < Ruby     #=> Gem is a subclass of Ruby. Ruby is the superclass of Gem
-      # If you do not specify a superclass, the class implicitly extends Object.
+      # class Gem < Ruby     #=> Gem is a subclass of Ruby. Ruby is the
+      # superclass of Gem If you do not specify a superclass, the class
+      # implicitly extends Object.
 
       # < is a boolean operator
       assert String < Comparable, "String inherits from Comparable"
@@ -510,7 +513,7 @@ class RubyTest < ActiveSupport::TestCase
   
     should "const_get:: mod.const_get(sym) => obj" do
       # Returns the value of the named constant in mod.
-      assert_equal 3, Math.const_get(:PI).truncate
+      assert_equal 3, Math.const_get(:PI).round
     end
 
     should "class << self::" do
@@ -589,17 +592,28 @@ termina_con_esto
       # lambda{ |x| x*x } my_block.call
     end
     
-    should "Blocks: use yield()" do
-      # The value of the "assert" is the value of the expression in the block
-      # (x>3), using "number" as a parameter for x.
-
-      def send_a_number(number) # "send_a_number" is the function, "number" is the argument of the function
-        # The presence of yield means a block has to be passed to the function.
-        yield(number) ? true : false # "number" is the argument of the yield, it will become the argument of the block
+    should "Blocks: yield::" do
+      # IF YOU SEE A "yield", it means that the function that has it will
+      # recieve a block at runtime.
+      def pass_number_as_block_argument(number)
+        yield number # "number" becomes the argument of the block. number is yielded to the block
       end
 
-      assert send_a_number(4) { |x| x > 3}
-      assert_false send_a_number(2) { |x| x > 3}
+      assert        pass_number_as_block_argument(4) { |x| x > 3 }
+      assert_false  pass_number_as_block_argument(2) { |x| x > 3 }
+
+      class IsTwo
+        def is_two?(num)
+          num == 2
+        end
+      end
+
+      def foo
+        yield IsTwo.new
+      end
+
+      assert_false foo { |bar| bar.is_two? 3 }
+      assert       foo { |bar| bar.is_two? 2 }
     end
 
     should "a block refers to outer variables, not inner" do
@@ -613,6 +627,7 @@ termina_con_esto
       execute_the_block_three_times_with_local_variable { my_var += 1 }
       assert_equal 8, my_var
     end
+
     should "&:: creates procs implicitely. It converts Blocks into Procs and viceversa" do
       def convert_block_to_proc(&block)# The unary ampersand operator
         block
@@ -643,6 +658,11 @@ termina_con_esto
       proc_with_proc_new = convert_block_to_proc_using_proc_new { "Proc.new()" }
       assert_equal "&", proc_with_ampersand.call
       assert_equal "Proc.new()", proc_with_proc_new.call
+
+      # #Alternative way to call Proc#[]
+      p = lambda{ |x| x * 2 }
+      assert_equal 6, p.call(3)
+      assert_equal 6, p[3]
     end
 
 
@@ -822,9 +842,12 @@ termina_con_esto
 
   end
 
-  context "Array" do
+  context ":Array:" do
 
-    should "creation" do
+    should "creation, Kernel#Array" do
+      # Tries to coerce its arguments into an array
+      assert_equal [1,2,3], Array([1,2,3])
+      assert_equal [1,2,3], Array(1..3)
       assert_equal [3], Array(3) # Alternative syntax
     end
 
@@ -832,6 +855,37 @@ termina_con_esto
       assert_equal "a-b-c", %w(a b c).join("-")
       assert_equal "a-b-c", %w(a b c) * "-", "see the splat operator"
       assert_equal "A-B-C", %w(a b c).collect{ |letra| letra.upcase! }.join("-")
+    end
+
+    should "to_sentence::" do
+      assert_equal "Luis, Juan y Pedro", %w(Luis Juan Pedro).to_sentence(:connector => 'y', :skip_last_comma => true)
+    end
+
+    should "in_groups_of::(size, fill_with)" do
+      # Group elements of the array into fixed-size groups
+      assert_equal [[1,2,3], [4,5,6], [7,8,nil]], (1..8).to_a.in_groups_of(3)
+      assert_equal [[1,2,3], [4,5,6], [7,8,-1]], (1..8).to_a.in_groups_of(3, -1)
+    end
+
+    should "split::" do
+      # splits on a value (and removes it) or on the result of a block
+      assert_equal [[1,2,3],[5,6,7,8]], (1..8).to_a.split(4)
+      assert_equal [[1,2,3],[5,6,7,8]], (1..8).to_a.split { |i| i == 4}
+    end
+
+    should "Array#extract_options!::" do
+      # Removes and returns the last element in the array if it’s a hash,
+      # otherwise returns a blank hash {}
+      def show_options(*args)
+        args.extract_options!
+      end
+      assert_equal({}, show_options(1,2))
+      assert_equal({:a => :b}, show_options(1,2,:a => :b))
+    end
+
+    should "Array#<<:: add item" do
+      a = []
+      assert_equal [2], a << 2
     end
   end
 
@@ -853,10 +907,19 @@ termina_con_esto
     end
 
     should "merge::" do
+      # merges the right into the left.
       h1 = { :a => 100, :b => 200 }
       h2 = { :b => 300, :c => 400 }
       h3 = h1.merge(h2)
       assert_equal Hash[ :a => 100, :b => 300, :c => 400 ], h3
+    end
+
+    should "reverse_merge::" do
+      # Merges the left into the right
+      h1 = {:a => 100, :b => 200}
+      h2 = {:b => 300, :c => 400}
+      h3 = h1.reverse_merge(h2)
+      assert_equal Hash[ :a => 100, :b => 200, :c => 400 ], h3
     end
 
     should "delete:: deletes and returns the value matching the key" do
@@ -874,22 +937,45 @@ termina_con_esto
       assert_equal(({2 => 'b', 3 => 'c'}), h)
     end
 
-    should "symbolize_keys::" do
+    should "symbolize_keys:: to_options:: (alias)" do
       # Return a new hash with all keys converted to symbols.
-       foo = { 'name' => 'Gavin', 'wife' => :Lisa }
-       assert_equal(({ :name => 'Gavin', :wife => :Lisa }), foo.symbolize_keys)
+      foo = { 'name' => 'Gavin', 'wife' => :Lisa }
+      assert_equal(({ :name => 'Gavin', :wife => :Lisa }), foo.symbolize_keys)
     end
 
     should "stringify_keys::" do
       # Return a new hash with all keys converted to strings.
-       foo = { :name => 'Gavin', :wife => :Lisa }
-       assert_equal(({ 'name' => 'Gavin', 'wife' => :Lisa }), foo.stringify_keys)
+      foo = { :name => 'Gavin', :wife => :Lisa }
+      assert_equal(({ 'name' => 'Gavin', 'wife' => :Lisa }), foo.stringify_keys)
 
     end
+
+    should "diff::" do
+      # creates a hash with key/value pairs that are in one hash but not in the
+      # other
+      a = {:a => :b, :c => :d}
+      b = {:e => :f, :c => :d}
+      assert_equal( ({:e => :f, :a => :b}), a.diff(b))
+    end
+
+    should "assert_valid_keys::" do
+      # raises an ArgumentError if the hash contains keys not in the argument
+      # list. Used to ensure only valid options are provided to a
+      # keyword-argument-based function
+    end
+
+    should "slice:: except::" do
+      # slice returns a new hash with only the keys specified. except returns a
+      # hash without the specified keys
+      options = {:a => 3, :b => 4, :c => 5}
+      assert_equal Hash[:c => 5, :a => 3], options.slice(:a,:c)
+      assert_equal Hash[:c => 5, :b => 4], options.except(:a)
+    end
+
   end
 
   context "String" do
-    should "concatenate:" do
+    should "concatenate: <<::" do
       # #It's better to append than to build new ones
       str = ''
       a = 'Nava'
@@ -898,6 +984,21 @@ termina_con_esto
       assert_equal 'Navalagamella', str << a << b << c, "Better"
       str = ''
       assert_equal 'Navalagamella', str << "#{a}" << "#{b}" << "#{c}"
+    end
+
+    should "match:: String#[]" do
+      # Alternative to using mach. It returns the portion of the string that
+      # matches the regex.
+      assert_equal "ac", "paco"[/ac/]
+      assert_equal "f", "asdf"[/d(.)/, 1]
+    end
+
+    should "scan::" do
+      # collects all of the regular expression's matches against the string into
+      # an array. If the pattern has groups, each element of the array is itself
+      # an array of captured text.
+      assert_equal ["a", "d"], "asdf".scan(/[a-e]/)
+      assert_equal [["ruby"], ["regex"]], "hello ruby; hello regex".scan(/hello (\w+)/)
     end
   end
 
@@ -968,7 +1069,7 @@ termina_con_esto
   context "Object" do
     should "blank?::" do
       # object is blank if it’s false, empty, or a whitespace string. This
-      # simplifies: if !address.nil? && !address.empty? to: if !address.blank?
+      # simplifies: (a.nil? || a.empty?) to: if a.blank?
       assert ''.blank?
       assert ' '.blank?
       assert "".blank?
@@ -1002,17 +1103,17 @@ termina_con_esto
       assert_equal 3, a.send(:private_abada), "Bypassing visibility rules"
     end
 
-  end
-
-  context "ActiveSupport" do
-    should "extract_options!::" do
-      # Removes and returns the last element in the array if it’s a hash,
-      # otherwise returns a blank hash {}
-      def show_options(*args)
-        args.extract_options!
+    should "with_options::" do
+      # provides a way to factor out redundant options on multiple method calls.
+      #
+      # #same as: map.default "", :action => 'index', :controller => 'post'
+      ActionController::Routing::Routes.draw do |map|
+        map.with_options(:controller => 'post') do |post|
+          post.default "", :action => 'index'
+        end
       end
-      assert_equal({}, show_options(1,2))
-      assert_equal({:a => :b}, show_options(1,2,:a => :b))
+
+      assert_equal 'index', ActionController::Routing::Routes.recognize_path("/")[:action]
     end
   end
 
@@ -1077,6 +1178,13 @@ termina_con_esto
     #
     should "You can separate thousands with underscores" do
       assert_equal 1_000_000, 1000000
+    end
+
+    should "Float#round::" do
+      assert_equal 3, Math::PI.round
+      assert_equal 3.1, Math::PI.round(1)
+      assert_equal 3.14, Math::PI.round(2)
+      assert_equal 3.142, Math::PI.round(3)
     end
   end
 
