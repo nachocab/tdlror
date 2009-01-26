@@ -18,9 +18,12 @@ class RubyTest < ActiveSupport::TestCase
       # Any assignment expression that has more than one l-value or r-value.
 
       # One l-value, multiple r-values
-      x = 1,2,3; assert_equal [1,2,3], x
+      x = 1,2,3
+      x.should == [1,2,3]
 
-      x, = 1,2,3; assert_equal 1,x
+      x, = 1,2,3;
+      x.should == 1
+      #      assert x == 1
 
       # Multiple l-values, one array r-value
       x,y,z = [1,2,3] # same as x,y,z = 1,2,3
@@ -63,8 +66,8 @@ class RubyTest < ActiveSupport::TestCase
       assert_equal nil, z
 
       x,(y,z) = 3, *{4 => 5}
-      assert_equal 3,x
-      assert_equal 4,y
+      assert_equal 3, x
+      assert_equal 4, y
       assert_equal 5, z
 
 
@@ -75,7 +78,8 @@ class RubyTest < ActiveSupport::TestCase
         a = 2; b = 3
         [a,b]
       end
-      assert_equal [2,3], return_two_values
+      x,y = return_two_values
+      x.should == 2; y.should == 3
 
       # See the splat operator for more assignments
 
@@ -101,13 +105,11 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "super:: Chaining" do
-      # It passes the arguments of the current method to the method with the
-      #   same name in the superclass. (The superclass doesn't have to define
-      #   it, it can inherit it from one of its ancestors.) It can be followed
-      #   by arguments.
-      #
-      # If you use super as a bare keyword, all the args passed to the current
-      # method are passed to the superclass method.
+      # It calls the method in the superclass with the same name, sending it the
+      # current arguments. (The superclass doesn't have to define it, it could
+      # inherit it from an ancestor.) Unless you specify what arguments get
+      # passed, they all do.
+
       class Point
         def initialize(x,y)
           @x = x
@@ -175,6 +177,13 @@ class RubyTest < ActiveSupport::TestCase
       end
       assert_equal "bimba pastinha camisa ", @mestres
     end
+  
+    should "alias:: " do
+      def existing; 3; end
+      alias new_name existing
+      assert_equal 3, new_name
+    end
+
   end
 
   context "Kernel" do
@@ -418,9 +427,7 @@ class RubyTest < ActiveSupport::TestCase
       esq2 = Esquiva.new
 
       assert_equal "esquivando", esq1.patada(esq2), "Calling protected method"
-      assert_raise NoMethodError do
-        esq1.esquivar # esquivar is protected
-      end
+      lambda { esq1.esquivar }. should raise_error(NoMethodError) # esquivar is protected
 
       #      def safe_send(receiver, method, message) # regular send bypasses visibility rules
       #        eval "receiver.#{method}"  # receiver.method
@@ -447,6 +454,7 @@ class RubyTest < ActiveSupport::TestCase
 
       assert_false String < Integer, "String doesn't inherit from Integer"
     end
+
 
   end
 
@@ -638,14 +646,13 @@ termina_con_esto
       assert external_proc.call(4), "the block returns true"
       assert_false external_proc.call(1), "the block returns false"
 
-      assert_raise ArgumentError do
-        [1,4,7].any? external_proc # any? expects a block and we're sending it a proc
-      end
+      # any? expects a block and we're sending it a proc
+      lambda {[1,4,7].any? external_proc }.should raise_error(ArgumentError)
 
       assert [1,4,7].any?(&external_proc), "We turn the proc back into a block"
     end
     
-    should "Proc:: use call(). proc { |...| block } => a_proc" do
+    should "Proc:: use call(). proc { |...| block } => a_proc. Also, call proc with Proc#[]::" do
       # Procs have block-like behavior, they are objects. Greatest feature =>
       # Procs can be saved in variables.
       def convert_block_to_proc_using_ampersand(&block)
@@ -659,10 +666,10 @@ termina_con_esto
       assert_equal "&", proc_with_ampersand.call
       assert_equal "Proc.new()", proc_with_proc_new.call
 
-      # #Alternative way to call Proc#[]
-      p = lambda{ |x| x * 2 }
-      assert_equal 6, p.call(3)
-      assert_equal 6, p[3]
+      # Alternative way to call Proc#[]
+      my_proc = lambda{ |x| x * 2 }
+      assert_equal 6, my_proc.call(3)
+      assert_equal 6, my_proc[3]
     end
 
 
@@ -709,9 +716,9 @@ termina_con_esto
       # Calling a lambda is like invoking a method.
 
       saved_proc_with_error = Proc.new { return 3 }
-      assert_raise LocalJumpError do
-        saved_proc_with_error.call # Can't call a proc that returns a value
-      end
+
+      # Can't call a proc that returns a value
+      lambda {saved_proc_with_error.call}.should raise_error(LocalJumpError)
 
       # either remove the return, or use a lambda
       saved_proc = Proc.new { 3 } # remove the return
@@ -781,10 +788,11 @@ termina_con_esto
   end
 
   context "Iterators" do
-    should "Array.map:: also called Enum.collect" do
+    should "Array.map:: also called Enum.collect::" do
       # map is an iterator that invokes the block that follows it once for each
       # element in the array.
-      assert_equal [1,4,9], [1,2,3].map { |x| x*x }, "Array"
+      #      assert_equal [1,4,9], [1,2,3].map { |x| x*x }, "Array"
+      [1,2,3].map { |x| x*x }.should eql [1,4,9] # Array
       assert_equal [2,4,6], (1..3).map { |x| x*2 }, "Range"
       assert_equal [2,3,4], [1,2,3].map(&:succ)
     end
@@ -887,6 +895,12 @@ termina_con_esto
       a = []
       assert_equal [2], a << 2
     end
+
+    should "compact::" do
+      # #removes nil values
+      assert_equal [1,2,3], [1,nil,2,nil,3].compact
+    end
+
   end
 
   context "Hash" do
@@ -937,7 +951,7 @@ termina_con_esto
       assert_equal(({2 => 'b', 3 => 'c'}), h)
     end
 
-    should "symbolize_keys:: to_options:: (alias)" do
+    should "symbolize_keys:: also called to_options:: " do
       # Return a new hash with all keys converted to symbols.
       foo = { 'name' => 'Gavin', 'wife' => :Lisa }
       assert_equal(({ :name => 'Gavin', :wife => :Lisa }), foo.symbolize_keys)
@@ -972,6 +986,33 @@ termina_con_esto
       assert_equal Hash[:c => 5, :b => 4], options.except(:a)
     end
 
+    should "dup:: variable assignment" do
+      # Produces a shallow copy of obj (the instance variables of obj are
+      # copied, but not the objects they reference).
+      original = { :a => 1, :b => 2 }
+      dupped = original.dup # original will not be modified by operations on dupped
+      second_dupped = dupped
+      second_dupped.delete(:a) # also deletes in dupped
+
+      assert_same_elements( {:b => 2}, second_dupped, "second_dupped" )
+      assert_same_elements( {:b => 2 }, dupped, "dupped" )
+      assert_same_elements( {:a => 1, :b => 2 }, original, "original" )
+
+      empty_original = {}
+      empty_dupped = empty_original.dup
+      second_empty_dupped = empty_dupped
+      second_empty_dupped[:b] = 2 # also inserts in empty_dupped
+
+      assert_same_elements( {:b => 2}, second_empty_dupped, "second_empty_dupped" )
+      assert_same_elements( {:b => 2 }, empty_dupped, "empty_dupped" )
+      assert_same_elements( {}, empty_original, "empty_original" )
+    end
+
+    should "delete_if::" do
+      arr = [1,2,3]
+      arr.delete_if { |num| num > 2 }
+      assert_equal [1,2], arr
+    end
   end
 
   context "String" do
@@ -1032,7 +1073,24 @@ termina_con_esto
 
     end
 
-    
+    should "collect:: or map::" do
+      assert_equal [2,3,4], [1,2,3].collect { |x| x.succ }, "Array"
+      assert_equal [2,3,4], (1..3).collect { |x| x.succ }, "Range"
+      assert_equal ["ABC DEF"], "abc def".collect { |x| x.upcase }, "String"
+      # Not useful with Hash. Use inject instead
+    end
+
+    should "detect::" do
+      # Returns the first in enum for which block is not false. If no object
+      # matches, calls ifnone and returns its result when it is specified, or
+      # returns nil
+
+      is_nil = (1..10).detect  {|i| i % 5 == 0 and i % 7 == 0 }
+      is_35 = (1..100).detect {|i| i % 5 == 0 and i % 7 == 0 }
+      assert_equal nil, is_nil
+      assert_equal 35, is_35
+
+    end
   end
 
   context "Range" do
@@ -1080,10 +1138,43 @@ termina_con_esto
       assert Hash[].blank?
     end
 
+    should "==::, equal?:: and eql?::" do
+      class A; end
+      a = A.new; b = A.new
+      
+      # == same object (usually overriden in descendant classes)
+      1.should be 1.0
+      [].should be []
+      "".should be ""
+      a.should_not be b # == is synonymous with eql? for Object instances.
+
+      # eql? same value
+      1.should_not eql 1.0
+      [].should eql []
+      "".should eql ""
+      a.should_not eql b # == is synonymous with eql? for Object instances.
+
+      # equal? same object (should never be overriden in descendant classes)
+      1.should_not equal 1.0
+      [].should_not equal []
+      "".should_not equal ""
+      a.should_not equal b
+      a.should equal a
+    end
+
     should "respond_to?:: obj.respond_to?(symbol, include_private=false) => true or false" do
       # Returns true if obj responds to the given method.
       assert_false 3.respond_to?(:upcase)
       assert "hola".respond_to?(:upcase)
+
+      class A; def a; "a"; end ;end
+      class B; def b; "b"; end ;end
+      as_and_bs = [A.new , A.new, B.new, A.new, B.new ]
+      result = as_and_bs.collect { |elem| elem.a if elem.respond_to?(:a) }.compact
+      assert_equal ["a","a","a"], result
+
+      result_without_compact = as_and_bs.collect { |elem| elem.a if elem.respond_to?(:a) }
+      assert_equal ["a","a",nil,"a",nil], result_without_compact
     end
 
     should "send:: obj.send(symbol [, args...]) => obj" do
@@ -1218,8 +1309,15 @@ termina_con_esto
       #      assert_equal ['oi pastinha', 'aloha pastinha'], greeter.call(['oi', 'aloha'])
     end
 
-    should "instance_eval::" do
-      # This method works in the context of the object
+    should "instance_eval:: " do
+      #   Evaluates a string or block within the context of the receiver (obj).
+      #   This is done by setting the variable self within the string or block
+      #   to obj, giving the code access to obj's instance variables.
+      #
+      # In the version of instance_eval that takes a String, the optional second
+      # and third parameters supply a filename and starting line number for
+      # compilation errors.
+
       class Klass
         :attr_accessor
         def initialize
@@ -1228,31 +1326,39 @@ termina_con_esto
       end
       k = Klass.new
       assert_equal 99, k.instance_eval { @secret }
+      assert_equal 99, k.instance_eval("@secret")
       assert_raise NoMethodError do
         k.secret #there is no accessor for that variable
       end
     end
 
-    should "instance_eval:: use it to define singleton methods" do
-      Fixnum.instance_eval "def zero; 0; end"
-      assert_equal 0, Fixnum.zero
-
-      # You can also pass a block
-      Fixnum.instance_eval do
-        def ten; 10; end
+    should "instance_eval:: use it to define singleton methods on instances and class methods on Classes" do
+      a = String.new
+      a.instance_eval {
+        def my_name(name)
+          "My name is #{name}"
+        end
+      }
+      assert_equal "My name is Nacho", a.my_name('Nacho') # my_name is a singleton method
+      assert_raise NoMethodError do
+        "paco".my_name('Nacho')
       end
-      assert_equal 10, Fixnum.ten
+
+      Fixnum.instance_eval "def zero; 0; end"
+      assert_equal 0, Fixnum.zero # zero is a class method
     end
 
-    should "class_eval:: include?:: mod.class_eval(string [, filename [, lineno]]) => obj" do
-      # filename and lineno set the text for error messages Evaluates a string
-      # or block in the context of the receiver
+    should "class_eval:: AKA module_eval:: use it to define instance methods" do
+      # include?::
+      #   mod.class_eval(string [, filename [, lineno]]) => obj filename and
+      #   lineno set the text for error messages Evaluates a string or block in
+      #   the context of the receiver
       assert_equal 1, Demo.class_eval{ @@x = 1 }
       assert_equal 1, Demo.class_eval{ @@x }
 
-      # You can define instance methods
       Fixnum.class_eval { def number; self; end }
-      assert_equal 5, 5.number
+      assert_equal 5, 5.number # number is an instance method of class Fixnum
+
       # You can dinamically use private methods
       module M; end
       assert_raise NoMethodError do
