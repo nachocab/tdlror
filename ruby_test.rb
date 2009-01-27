@@ -5,14 +5,13 @@ require 'test_helper'
 class RubyTest < ActiveSupport::TestCase
   # Glossary
   #
-  # first-class entities - They can be stored in variables, they are objects,
-  # they can be created with .new()
+  # first-class entities - They can be stored in variables, they are objects, they can be
+  # created with .new()
   #
-  # Mix a module into a class - Make the module's instance methods available to
-  # all instances of the class
+  # Mix a module into a class - Make the module's instance methods available to all
+  # instances of the class
   #
-  # receiver - Receiver.method(argument) => Receiver is what receives the method
-  # message.
+  # receiver - Receiver.method(argument) => Receiver is what receives the method message.
   context "Ruby" do
     should "Parallel assignment" do
       # Any assignment expression that has more than one l-value or r-value.
@@ -85,6 +84,7 @@ class RubyTest < ActiveSupport::TestCase
 
     end
 
+
     should "unless::" do
       # Unless means: execute the LEFT unless the RIGHT evaluates to TRUE
       #
@@ -105,10 +105,9 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "super:: Chaining" do
-      # It calls the method in the superclass with the same name, sending it the
-      # current arguments. (The superclass doesn't have to define it, it could
-      # inherit it from an ancestor.) Unless you specify what arguments get
-      # passed, they all do.
+      # It calls the method in the superclass with the same name, sending it the current
+      # arguments. (The superclass doesn't have to define it, it could inherit it from an
+      # ancestor.) Unless you specify what arguments get passed, they all do.
 
       class Point
         def initialize(x,y)
@@ -133,13 +132,13 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "ensure::" do
-      # Ensure that housekeeping details like closing files, disconnecting DB
-      #   connections and committing transactions get done. Use it whenever you
-      #   allocate a resource (file, DB connection) to ensure proper cleanup
-      #   occurs. Even if there is an exception, the ensure clause gets called.
+      # Ensure that housekeeping details like closing files, disconnecting DB connections
+      #   and committing transactions get done. Use it whenever you allocate a resource
+      #   (file, DB connection) to ensure proper cleanup occurs. Even if there is an
+      #   exception, the ensure clause gets called.
       #
-      # The ensure clause can replace the running exception with another one, or
-      # switch the current return value with another one.
+      # The ensure clause can replace the running exception with another one, or switch
+      # the current return value with another one.
       def ensure_returns
         begin
           return 1
@@ -151,8 +150,8 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "and::" do
-      # Using this pattern wee can guarantee that the result we return will be
-      #   valid, even if an unexpected error is raised
+      # Using this pattern wee can guarantee that the result we return will be valid, even
+      #   if an unexpected error is raised
       def increase_number(number)
         number.is_a?(Fixnum) ? number += 1 : (raise ArgumentError)
       end
@@ -188,8 +187,8 @@ class RubyTest < ActiveSupport::TestCase
 
   context "Kernel" do
     should "method_missing:: obj.method_missing(symbol [, *args] ) => result " do
-      # symbol is the symbol for the method called, and args are any arguments
-      #   that were passed to it
+      # symbol is the symbol for the method called, and args are any arguments that were
+      #   passed to it
       class Roman
         def roman_to_int(str)
           case str.to_s
@@ -221,8 +220,8 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "*:: The splat operator" do
-      # Uses Array Expansion Syntax. It lets us group together all remaining
-      #   parameters into a single array variable
+      # Uses Array Expansion Syntax. It lets us group together all remaining parameters
+      #   into a single array variable
 
       # 1 - ASSIGNMENT: * expands r-value arrays and hashes
       pet1, pet2, pet3 = 'duck', *['dog','cat']
@@ -246,7 +245,7 @@ class RubyTest < ActiveSupport::TestCase
       vehicles = [ :planes, 21, :cars, 36 ]
       vehicles_hash = Hash[*vehicles]
       assert_equal({ :planes => 21, :cars => 36 }, vehicles_hash)
-      # convert a nested array
+      # convert a nested array into a hash
       vehicles_nested = [[:planes, 21], [:cars, 36]] # same as vehicles_hash.to_a
       vehicles_hash_unnested = Hash[*vehicles_nested.flatten]
       assert_equal({ :planes => 21, :cars => 36 }, vehicles_hash_unnested)
@@ -266,8 +265,8 @@ class RubyTest < ActiveSupport::TestCase
       end
       assert_equal "Africa", determine_continent("ñu")
 
-      # 6 - Array#* operates as Array#join if supplied a string. If give a
-      #   number, it does repetition
+      # 6 - Array#* operates as Array#join if supplied a string. If give a number, it does
+      #   repetition
       array = %w( join this sentence )
       assert_equal "join—this—sentence", ( array * '—')
       assert_equal [0,0,0,0,0], [0] * 5
@@ -287,8 +286,7 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "!!::Double negation" do
-      # Used to force an object into an explicit true/false. Usually not
-      # necessary
+      # Used to force an object into an explicit true/false. Usually not necessary
       def is_this_true?
         @fishy_variable
       end
@@ -310,6 +308,24 @@ class RubyTest < ActiveSupport::TestCase
 
       assert_equal "<p>hello</p>", ( "<%s>%s</%s>" % %w{p hello p} )
     end
+
+    should "<=>::" do
+      # Fixnum
+      assert_equal -1, 2 <=> 3
+      assert_equal  0, 3 <=> 3
+      assert_equal  1, 3 <=> 2
+
+      # String
+      assert_equal -1, "abc" <=> "abcd"
+      assert_equal  0, "abc" <=> "abc"
+      assert_equal  1, "abcd" <=> "abc"
+
+      # Array
+      assert_equal -1, [1] <=> [1,2]
+      assert_equal  0, [1] <=> [1]
+      assert_equal  1, [1,2] <=> [1]
+
+    end
   end
 
   context "Methods & Classes" do
@@ -319,14 +335,13 @@ class RubyTest < ActiveSupport::TestCase
 
     end
     should "Singleton Method::" do
-      # Singleton Method - Method that is defined for only a single object
-      # rather than a class of objects.
+      # Singleton Method - Method that is defined for only a single object rather than a
+      # class of objects.
       def Point.sum
         # sum is a singleton method on an object Point
       end
 
-      # The singleton methods of an object are instance methods of its singleton
-      # class.
+      # The singleton methods of an object are instance methods of its singleton class.
       class Iuna 
         def self.don ; "don"; end
         def self.yin ; "yin"; end
@@ -352,10 +367,9 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "define_method(meth_name, meth_body):: Defines an instance method in the receiver" do
-      # It expects a Symbol as meth_name and it creates a method with that name,
-      # using the associated "block" as the method body. Instead of a block, it
-      # can also be a Proc or a Method object. The block is evaluated using
-      # instance_eval.
+      # It expects a Symbol as meth_name and it creates a method with that name, using the
+      # associated "block" as the method body. Instead of a block, it can also be a Proc
+      # or a Method object. The block is evaluated using instance_eval.
       class A
         def create_method(name, &block)
           self.class.send(:define_method, name, &block)
@@ -384,9 +398,8 @@ class RubyTest < ActiveSupport::TestCase
         end
       end
 
-      # Alternative Syntax: If you open the eigenclass of a class object within
-      # the definition of a class itself, you can use self instead of the name
-      # of the class
+      # Alternative Syntax: If you open the eigenclass of a class object within the
+      # definition of a class itself, you can use self instead of the name of the class
       class Point
         # instance methods go here
         class << self # opening the singleton class
@@ -399,22 +412,21 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "method visibility public:: private:: protected::" do
-      # methods are normally public (except the initialize method, which is
-      # private).
+      # methods are normally public (except the initialize method, which is private).
 
-      # private methods are implicitely invoked on self, and may not be
-      # explicitly invoked on an object.
+      # private methods are implicitely invoked on self, and may not be explicitly invoked
+      # on an object.
 
-      # public, private and protected only apply to methods. Instance & class
-      # variables are encapsulated and thus, behave as private (the only way to
-      # make an instance variable accessible from outside a class is defining an
-      # accessor method). Constants behave as public (there is no way of making
-      # them unaccessible to outside use).
+      # public, private and protected only apply to methods. Instance & class variables
+      # are encapsulated and thus, behave as private (the only way to make an instance
+      # variable accessible from outside a class is defining an accessor method).
+      # Constants behave as public (there is no way of making them unaccessible to outside
+      # use).
 
 
-      # A protected method is like a private method (it can only be invoked from
-      # within the implementation of a class or its subclasses) but it may be
-      # explicitely invoked on any instance of the class.
+      # A protected method is like a private method (it can only be invoked from within
+      # the implementation of a class or its subclasses) but it may be explicitely invoked
+      # on any instance of the class.
       #
       class Esquiva
         def patada(esq) esq.esquivar end
@@ -441,13 +453,12 @@ class RubyTest < ActiveSupport::TestCase
     end
 
     should "Subclassing <:: or inheritance" do
-      # Used to extend a class with the methods in another class. When we define
-      # a class, we may specify that it extends—or inherits from—another class,
-      # known as the superclass.
+      # Used to extend a class with the methods in another class. When we define a class,
+      # we may specify that it extends—or inherits from—another class, known as the
+      # superclass.
       #
-      # class Gem < Ruby     #=> Gem is a subclass of Ruby. Ruby is the
-      # superclass of Gem If you do not specify a superclass, the class
-      # implicitly extends Object.
+      # class Gem < Ruby     #=> Gem is a subclass of Ruby. Ruby is the superclass of Gem
+      # If you do not specify a superclass, the class implicitly extends Object.
 
       # < is a boolean operator
       assert String < Comparable, "String inherits from Comparable"
@@ -459,9 +470,9 @@ class RubyTest < ActiveSupport::TestCase
   end
 
   context "Module" do
-    # Modules are classes that can't be instantiated or subclassed. They can be
-    # used as namespaces (to group related methods or constants) and as mixins
-    # (to include instance methods in classes).
+    # Modules are classes that can't be instantiated or subclassed. They can be used as
+    # namespaces (to group related methods or constants) and as mixins (to include
+    # instance methods in classes).
     setup do
       module InstanceMethods
         def an_instance_method; self.class ;end
@@ -481,17 +492,16 @@ class RubyTest < ActiveSupport::TestCase
       class MyClass
         include InstanceMethods
         extend ClassMethods # ClassMethods == SingletonMethods
-        # If extend is called inside the class, it adds module methods as CLASS
-        # METHODS (because adding instance methods to its eigenclass makes them
-        # class methods).
+        # If extend is called inside the class, it adds module methods as CLASS METHODS
+        # (because adding instance methods to its eigenclass makes them class methods).
       end
 
       my_class_instance = MyClass.new
       assert_equal MyClass, my_class_instance.an_instance_method, "Instance methods are now available"
       assert_equal MyClass, MyClass.a_class_method, "Class methods are now available"
 
-      # Using extend outside the class definition, adds the methods as singleton
-      # methods (meaning, only to that instance of the class).
+      # Using extend outside the class definition, adds the methods as singleton methods
+      # (meaning, only to that instance of the class).
       obj_instance = Object.new
       obj_instance.extend InstanceMethods # Other object instances won't have access to "an_instance_method"
       assert_equal Object, obj_instance.an_instance_method, "Instance methods are now available"
@@ -499,8 +509,8 @@ class RubyTest < ActiveSupport::TestCase
 
     should "include:: and extend:: simplified" do
       module InstanceMethodsWithExtend
-        # Called everytime a module is included. Same thing with extended. base
-        # is also known as klass
+        # Called everytime a module is included. Same thing with extended. base is also
+        # known as klass
         def self.included(base)
           base.extend(ClassMethods)
         end
@@ -515,13 +525,22 @@ class RubyTest < ActiveSupport::TestCase
     end
     
     should "require::" do
-      # It's used for loading files. You may need to include after requiring (if
-      # they contain modules).
+      # Loads an external file. Ruby finds these files by searching in the LOAD_PATH. You
+      # may need to include after requiring (if they contain modules).
+
+      #   If a file is in the lib directory, you require it directly by name. require
+      #   'easter' # lib/easter.rb
+      #
+      # If it's in a subdirectory of lib, you need to specify it.
+      #  require 'shipping/airmail' # lib/shipping/airmail.rb
     end
   
     should "const_get:: mod.const_get(sym) => obj" do
-      # Returns the value of the named constant in mod.
+      #   Returns the value of the named constant in mod.
       assert_equal 3, Math.const_get(:PI).round
+
+      #   Leave the lefthandside empty to look for a global constant
+      assert ::ARGV, "global constant"
     end
 
     should "class << self::" do
@@ -542,10 +561,10 @@ class RubyTest < ActiveSupport::TestCase
 
   context "Literals" do
     should "String literals" do
-      # There are four matching delimiters: [], {}, (), <>. Any other delimiter
-      # used has to be repeated: !!,||, "", '', //,++,**,:: etc.
+      #   There are four matching delimiters: [], {}, (), <>. Any other delimiter used has
+      #   to be repeated: !!,||, "", '', //,++,**,:: etc.
 
-      # No interpolation: '' or %q
+      #   No interpolation: '' or %q
       assert_equal "paco", 'paco'
       assert_equal "paco", %q[paco]
       assert_equal "paco", %q{paco}
@@ -554,12 +573,12 @@ class RubyTest < ActiveSupport::TestCase
       assert_equal "pa{c}o", %q/pa{c}o/
       assert_equal "pa_co", %q_pa\_co_
 
-      # Interpolation "", %Q or just %
+      #   Interpolation "", %Q or just %
       assert_equal "4", "#{2*2}"
       assert_equal "4", %Q+#{2*2}+
       assert_equal "4", %|#{2*2}|
 
-      # Here documents
+      #   Here documents
       multiline_no_dash = <<termina_con_esto
         Hola
         Paco
@@ -574,12 +593,12 @@ termina_con_esto
     end
 
     should "Array literals (arrays of strings)" do
-      # No interpolation %w
+      #   No interpolation %w
       assert_equal ['a', 'b', 'c'], %w[a b c]
       assert_equal ['(', '[', '{', '<'], %w| ( [ { < |
       assert_equal ['\s'], %w(\s)
 
-      # Interpolation %W
+      #   Interpolation %W
       assert_equal [' '], %W(\s)
       assert_equal ["\s"], %W(\s)
       a = 3
@@ -592,17 +611,17 @@ termina_con_esto
   end
 
   context "Blocks, Procs, Lambdas and Methods" do
-    # Blocks are syntactic structures; they are NOT objects, and cannot be
-    # manipulated as objects. It's possible to create an object that represents
-    # a block: a proc or a lambda.
+    #   Blocks are syntactic structures; they are NOT objects, and cannot be manipulated
+    #   as objects. It's possible to create an object that represents a block: a proc or a
+    #   lambda.
     should "not assign a block to a variable" do
-      # my_block = { |x| x*x } #=> SyntaxError use this instead: my_block =
-      # lambda{ |x| x*x } my_block.call
+      #   my_block = { |x| x*x } #=> SyntaxError use this instead: my_block = lambda{ |x|
+      #   x*x } my_block.call
     end
     
     should "Blocks: yield::" do
-      # IF YOU SEE A "yield", it means that the function that has it will
-      # recieve a block at runtime.
+      #   IF YOU SEE A "yield", it means that the function that has it will recieve a
+      #   block at runtime.
       def pass_number_as_block_argument(number)
         yield number # "number" becomes the argument of the block. number is yielded to the block
       end
@@ -646,15 +665,15 @@ termina_con_esto
       assert external_proc.call(4), "the block returns true"
       assert_false external_proc.call(1), "the block returns false"
 
-      # any? expects a block and we're sending it a proc
+      #   any? expects a block and we're sending it a proc
       lambda {[1,4,7].any? external_proc }.should raise_error(ArgumentError)
 
       assert [1,4,7].any?(&external_proc), "We turn the proc back into a block"
     end
     
     should "Proc:: use call(). proc { |...| block } => a_proc. Also, call proc with Proc#[]::" do
-      # Procs have block-like behavior, they are objects. Greatest feature =>
-      # Procs can be saved in variables.
+      #   Procs have block-like behavior, they are objects. Greatest feature => Procs can
+      #   be saved in variables.
       def convert_block_to_proc_using_ampersand(&block)
         block
       end
@@ -666,7 +685,7 @@ termina_con_esto
       assert_equal "&", proc_with_ampersand.call
       assert_equal "Proc.new()", proc_with_proc_new.call
 
-      # Alternative way to call Proc#[]
+      #   Alternative way to call Proc#[]
       my_proc = lambda{ |x| x * 2 }
       assert_equal 6, my_proc.call(3)
       assert_equal 6, my_proc[3]
@@ -675,7 +694,7 @@ termina_con_esto
 
       
     should "Proc:: Pass a Proc as an argument" do
-      # Calling a proc is like yielding to a block
+      #   Calling a proc is like yielding to a block
       Array.class_eval do
         def iterate!(code) # note, no &. A Proc is just a regular parameter
           self.each_with_index do |n,i|
@@ -705,19 +724,19 @@ termina_con_esto
     end
 
     should "to_proc::" do
-      # If you send something that isn't a Proc to the & unary op. It will try
-      # to convert it into a proc by using its to_proc method, and then convert
-      # it into a block
+      #   If you send something that isn't a Proc to the & unary op. It will try to
+      #   convert it into a proc by using its to_proc method, and then convert it into a
+      #   block
 
     end
 
     should "Lambda:: lambda { |...| block } => a_proc | proc { ... } is a synonym" do
-      # Lambdas have method-like behavior, but they are instances of class Proc.
-      # Calling a lambda is like invoking a method.
+      #   Lambdas have method-like behavior, but they are instances of class Proc. Calling
+      #   a lambda is like invoking a method.
 
       saved_proc_with_error = Proc.new { return 3 }
 
-      # Can't call a proc that returns a value
+      #   Can't call a proc that returns a value
       lambda {saved_proc_with_error.call}.should raise_error(LocalJumpError)
 
       # either remove the return, or use a lambda
@@ -729,8 +748,7 @@ termina_con_esto
     end
 
     should "Lambda and Proc differences" do
-      # 1) Lambdas don't check the number of parameters passed when called.
-      # Procs do.
+      #   1) Lambdas don't check the number of parameters passed when called. Procs do.
       checks_params = lambda { |one, two, three| "#{one} #{two} #{three.class}" }
       assert_raise ArgumentError do
         checks_params.call(1,2)
@@ -739,9 +757,9 @@ termina_con_esto
       does_not_check_params = Proc.new { |one, two, three| "#{one} #{two} #{three.class}" }
       assert_equal "1 2 NilClass", does_not_check_params.call(1,2)
 
-      # 2) Lambdas have diminutive returns. A Proc will stop a method and return
-      # the value provided, lambdas will return their value to the method and
-      # let the method continue on.
+      #   2) Lambdas have diminutive returns. A Proc will stop a method and return the
+      #   value provided, lambdas will return their value to the method and let the method
+      #   continue on.
       def proc_return
         Proc.new { return "Proc.new"}.call #stop here
         return "proc_return method finished"
@@ -753,13 +771,13 @@ termina_con_esto
 
       assert_equal "Proc.new", proc_return # Procs are code snippets, not methods.
       assert_equal "lambda_return method finished", lambda_return
-      # lambdas are methods: they check the number of arguments and don't
-      # override the calling method's return
+      #   lambdas are methods: they check the number of arguments and don't override the
+      #   calling method's return
     end
 
     should "block-arguments::" do
-      # #block-arguments are like regular arguments. They get assigned when the
-      # lambda is called
+      #   #block-arguments are like regular arguments. They get assigned when the lambda
+      #   is called
       methods = %w( upcase! chop! )
       var = "hola"
       block = lambda { |responder| methods.each { |method| responder.send(method) } }
@@ -768,8 +786,8 @@ termina_con_esto
     end
 
     should "Method::" do
-      # Useful if you want to pass a method as a block. It's like a lambda but
-      # without being anonymous
+      #   Useful if you want to pass a method as a block. It's like a lambda but without
+      #   being anonymous
       Array.class_eval do
         def iterate!(code) # note, no &. A Proc is just a regular parameter
           self.each_with_index do |n,i|
@@ -789,21 +807,31 @@ termina_con_esto
 
   context "Iterators" do
     should "Array.map:: also called Enum.collect::" do
-      # map is an iterator that invokes the block that follows it once for each
-      # element in the array.
-      #      assert_equal [1,4,9], [1,2,3].map { |x| x*x }, "Array"
-      [1,2,3].map { |x| x*x }.should eql [1,4,9] # Array
-      assert_equal [2,4,6], (1..3).map { |x| x*2 }, "Range"
-      assert_equal [2,3,4], [1,2,3].map(&:succ)
+      #   Returns a new array with the results of running the block for each element.
+
+      assert_equal [1,4,9], [1,2,3].collect { |x| x*x }, "Array"
+      assert_equal [2,4,6], (1..3).collect { |x| x*2 }, "Range"
+      assert_equal [2,3,4], [1,2,3].collect(&:succ)
+
+      #   DO NOT CONFUSE WITH each:: "each" returns the original array, "collect" returns
+      #   the resulting array
+      assert_equal [1,4,9], [1,2,3].collect { |x| x*x }, "Array"
+      assert_equal [1,2,3], [1,2,3].each { |x| x*x }, "Array"
+
+      #   Convert an array into a hash
+      hash = {}
+      ['a','b','c','a','b'].collect {|letter| hash[letter] ? hash[letter] += 1 : hash[letter] = 1 }
+      hash #you can assign the hash directly to collect because in this case it will return 1's and 2's
+      assert_same_elements( {'a' => 2, 'b' => 2, 'c' => 1}, hash )
+
     end
 
     should "inject::" do
-      # Invokes the associated block with two arguments. The first argument is
-      # an accumulator convert previous iterations. The second is the next
-      # element. The return value becomes the first block-argument for the next
-      # iteration (except for the last iteration). The initial value of the
-      # accumulator is either the arg to inject, or the first element of the
-      # enumerable object.
+      #   Invokes the associated block with two arguments. The first argument is an
+      #   accumulator convert previous iterations. The second is the next element. The
+      #   return value becomes the first block-argument for the next iteration (except for
+      #   the last iteration). The initial value of the accumulator is either the arg to
+      #   inject, or the first element of the enumerable object.
       data = [2,5,3,4]
       sum = data.inject { |sum, current_value| sum + current_value}
       assert_equal 2 + 5 + 3 + 4, sum
@@ -814,9 +842,9 @@ termina_con_esto
       maximum = data.inject { |max, current_value| max > current_value ? max : current_value}
       assert_equal 5, maximum
 
-      # injecting an empty hash converts a nested array into a hash. It's better
-      # to use hash_with_splat, but if it's nested with two or more leves it
-      # might give errors, then you might want to use flatten(1).
+      #   injecting an empty hash converts a nested array into a hash. It's better to use
+      #   hash_with_splat, but if it's nested with two or more leves it might give errors,
+      #   then you might want to use flatten(1).
       nested_array = [ [1,2],[3,4],[5,6] ]
       new_hash = nested_array.inject({}) do |hash, (key, value)| #   hash,(key,value) = {},[1,2]
         hash[key] = value
@@ -826,7 +854,7 @@ termina_con_esto
       assert_same_elements(({5 => 6, 1 => 2, 3 => 4}),new_hash)
       assert_same_elements(({5 => 6, 1 => 2, 3 => 4}), hash_with_splat )
 
-      # inject an array
+      #   inject an array
       nested_hash ={%w( à ä á) => 'a', %w( é è ê ë) => 'e'}
       convert, to = nested_hash.inject(['','']) do |array,(key,value)| # array,(key,value) = ['',''], *{['à','ä','á'] => 'a'}
         array[0] << key * ''
@@ -844,22 +872,22 @@ termina_con_esto
       hash.each { |key,value| joined_hash += (key.to_s + value)} # key, value = [key, value] parallel assignment
       assert_equal "holaoiadiosadeus".length, joined_hash.length
 
-      # When using Hash.each with two block-parameters, it's the same as using
-      # Hash.each_pair.
+      #   When using Hash.each with two block-parameters, it's the same as using
+      #   Hash.each_pair.
     end
 
   end
 
-  context ":Array:" do
+  context "Array:" do
 
     should "creation, Kernel#Array" do
-      # Tries to coerce its arguments into an array
+      #   Tries to coerce its arguments into an array
       assert_equal [1,2,3], Array([1,2,3])
       assert_equal [1,2,3], Array(1..3)
       assert_equal [3], Array(3) # Alternative syntax
     end
 
-    should "join::" do
+    should "join:: Convert array to string" do
       assert_equal "a-b-c", %w(a b c).join("-")
       assert_equal "a-b-c", %w(a b c) * "-", "see the splat operator"
       assert_equal "A-B-C", %w(a b c).collect{ |letra| letra.upcase! }.join("-")
@@ -870,20 +898,20 @@ termina_con_esto
     end
 
     should "in_groups_of::(size, fill_with)" do
-      # Group elements of the array into fixed-size groups
+      #   Group elements of the array into fixed-size groups
       assert_equal [[1,2,3], [4,5,6], [7,8,nil]], (1..8).to_a.in_groups_of(3)
       assert_equal [[1,2,3], [4,5,6], [7,8,-1]], (1..8).to_a.in_groups_of(3, -1)
     end
 
     should "split::" do
-      # splits on a value (and removes it) or on the result of a block
+      #   splits on a value (and removes it) or on the result of a block
       assert_equal [[1,2,3],[5,6,7,8]], (1..8).to_a.split(4)
       assert_equal [[1,2,3],[5,6,7,8]], (1..8).to_a.split { |i| i == 4}
     end
 
     should "Array#extract_options!::" do
-      # Removes and returns the last element in the array if it’s a hash,
-      # otherwise returns a blank hash {}
+      #   Removes and returns the last element in the array if it’s a hash, otherwise
+      #   returns a blank hash {}
       def show_options(*args)
         args.extract_options!
       end
@@ -897,39 +925,56 @@ termina_con_esto
     end
 
     should "compact::" do
-      # #removes nil values
+      #   removes nil values
       assert_equal [1,2,3], [1,nil,2,nil,3].compact
     end
 
+    should "delete_if::" do
+      arr = [1,2,3]
+      arr.delete_if { |num| num > 2 }
+      assert_equal [1,2], arr
+    end
+
+    should "sort::" do
+      #   Returns a new array created by sorting self. Comparisons for the sort will be
+      #   done using the <=> operator or using an optional code block. The block
+      #   implements a comparison between a and b, returning -1, 0, or #+1
+      arr = [2,4,3,5,1]
+      assert_equal [1,2,3,4,5], arr.sort
+
+      assert_equal [5,4,3,2,1], arr.sort { |first, second| second <=> first }
+    end
   end
 
-  context "Hash" do
+  context "Hash:" do
     setup do
       @vehicles_hash = { :cars => 36, :boats => 8, :trains => 12, :planes => 21 }
     end
 
     should "select::" do
-      # Returns a new ARRAY consisting of [key,value] pairs for which the block
-      # returns true
+      #   Returns a new ARRAY consisting of [key,value] pairs for which the block returns
+      #   true
       vehicles_array = [[:cars, 36], [:planes, 21]]
       assert_same_elements vehicles_array, @vehicles_hash.select { |key, value| value > 20 }
     end
 
     should "values_at::" do
-      # Return an array containing the values associated with the given keys
+      #   Return an array containing the values associated with the given keys
       assert_equal [36, 8], @vehicles_hash.values_at(:cars, :boats)
     end
 
     should "merge::" do
-      # merges the right into the left.
+      #   merges the right into the left.
       h1 = { :a => 100, :b => 200 }
       h2 = { :b => 300, :c => 400 }
       h3 = h1.merge(h2)
       assert_equal Hash[ :a => 100, :b => 300, :c => 400 ], h3
+
+      
     end
 
     should "reverse_merge::" do
-      # Merges the left into the right
+      #   Merges the left into the right
       h1 = {:a => 100, :b => 200}
       h2 = {:b => 300, :c => 400}
       h3 = h1.reverse_merge(h2)
@@ -943,8 +988,8 @@ termina_con_esto
     end
 
     should "shift::" do
-      # removes a key-value pair from the hash and returns it as a two-item
-      # array (or the hash's default value, if it's empty)
+      #   removes a key-value pair from the hash and returns it as a two-item array (or
+      #   the hash's default value, if it's empty)
       h = { 1 => 'a', 2 => 'b', 3 => 'c'}
       item = h.shift
       assert_equal [1,'a'], item
@@ -952,43 +997,41 @@ termina_con_esto
     end
 
     should "symbolize_keys:: also called to_options:: " do
-      # Return a new hash with all keys converted to symbols.
+      #   Return a new hash with all keys converted to symbols.
       foo = { 'name' => 'Gavin', 'wife' => :Lisa }
       assert_equal(({ :name => 'Gavin', :wife => :Lisa }), foo.symbolize_keys)
     end
 
     should "stringify_keys::" do
-      # Return a new hash with all keys converted to strings.
+      #   Return a new hash with all keys converted to strings.
       foo = { :name => 'Gavin', :wife => :Lisa }
       assert_equal(({ 'name' => 'Gavin', 'wife' => :Lisa }), foo.stringify_keys)
 
     end
 
     should "diff::" do
-      # creates a hash with key/value pairs that are in one hash but not in the
-      # other
+      #   creates a hash with key/value pairs that are in one hash but not in the other
       a = {:a => :b, :c => :d}
       b = {:e => :f, :c => :d}
       assert_equal( ({:e => :f, :a => :b}), a.diff(b))
     end
 
     should "assert_valid_keys::" do
-      # raises an ArgumentError if the hash contains keys not in the argument
-      # list. Used to ensure only valid options are provided to a
-      # keyword-argument-based function
+      #   raises an ArgumentError if the hash contains keys not in the argument list. Used
+      #   to ensure only valid options are provided to a keyword-argument-based function
     end
 
     should "slice:: except::" do
-      # slice returns a new hash with only the keys specified. except returns a
-      # hash without the specified keys
+      #   slice returns a new hash with only the keys specified. except returns a hash
+      #   without the specified keys
       options = {:a => 3, :b => 4, :c => 5}
       assert_equal Hash[:c => 5, :a => 3], options.slice(:a,:c)
       assert_equal Hash[:c => 5, :b => 4], options.except(:a)
     end
 
     should "dup:: variable assignment" do
-      # Produces a shallow copy of obj (the instance variables of obj are
-      # copied, but not the objects they reference).
+      #   Produces a shallow copy of obj (the instance variables of obj are copied, but
+      #   not the objects they reference).
       original = { :a => 1, :b => 2 }
       dupped = original.dup # original will not be modified by operations on dupped
       second_dupped = dupped
@@ -1007,47 +1050,96 @@ termina_con_esto
       assert_same_elements( {:b => 2 }, empty_dupped, "empty_dupped" )
       assert_same_elements( {}, empty_original, "empty_original" )
     end
+  
+    should "collect::" do
+      #   converts the hash to an array
+      hash = {:a => 1, :b => 2}
+      assert_same_elements [[:a,1], [:b,2]], hash.collect { |pair| pair }
+      assert_same_elements [[:a,1], [:b,2]], hash.collect { |key, value| [key,value] }
 
-    should "delete_if::" do
-      arr = [1,2,3]
-      arr.delete_if { |num| num > 2 }
-      assert_equal [1,2], arr
+      converted_array = *hash
+      assert_same_elements [[:a,1], [:b,2]], converted_array
+    end
+
+    should "sort::" do
+      # converts the hash into an array of two-element arrays and calls
+      # Array#sort::
+      hash = { :a => 5, :b => 3}
+      assert_equal [[:b,3],[:a,5]], hash.sort { |first, second| first[1] <=> second[1] } # first == [:a,3]
+
+
+      #   When called without a block, it sorts by keys.
+      hash = { 'a' => 5, 'b' => 3}
+      assert_equal [['a',5],['b',3]], hash.sort
+
+      hash = { :a => 3, :b => 5}
+      assert_raise NoMethodError do
+        hash.sort # undefined method <=> for symbol
+      end
     end
   end
 
-  context "String" do
+  context "String:" do
     should "concatenate: <<::" do
       # #It's better to append than to build new ones
       str = ''
       a = 'Nava'
       b = 'laga'
       c = 'mella'
-      assert_equal 'Navalagamella', str << a << b << c, "Better"
+      assert_equal 'Navalagamella', str << a << b << c, "Better, they already existed"
       str = ''
-      assert_equal 'Navalagamella', str << "#{a}" << "#{b}" << "#{c}"
+      assert_equal 'Navalagamella', str << "#{a}" << "#{b}" << "#{c}", "Less efficient, creates new strings"
+      str = ''
+      assert_equal 'Navalagamella', str.concat(a + b + c)
     end
 
     should "match:: String#[]" do
-      # Alternative to using mach. It returns the portion of the string that
-      # matches the regex.
+      # Alternative to using mach. It returns the portion of the string that matches the
+      # regex.
       assert_equal "ac", "paco"[/ac/]
       assert_equal "f", "asdf"[/d(.)/, 1]
     end
 
     should "scan::" do
-      # collects all of the regular expression's matches against the string into
-      # an array. If the pattern has groups, each element of the array is itself
-      # an array of captured text.
+      # collects all of the regular expression's matches against the string into an array.
+      # If the pattern has groups, each element of the array is itself an array of
+      # captured text.
       assert_equal ["a", "d"], "asdf".scan(/[a-e]/)
       assert_equal [["ruby"], ["regex"]], "hello ruby; hello regex".scan(/hello (\w+)/)
+    end
+
+    should "split:: I want to break up a string everytime a delimiter appears" do
+      # str.split(pattern=$;, [limit]) => array $; is the delimiter
+      str = "Hola Paco. Cuanto tiempo. Ole."
+
+      # Split at every period
+      assert_equal ["Hola Paco", " Cuanto tiempo", " Ole"], str.split(".")
+      assert_equal ["Hola Paco", " Cuanto tiempo", " Ole"], str.split(/\./)
+
+      # Split at every period, removing the whitespace
+      assert_equal ["Hola Paco", "Cuanto tiempo", "Ole"], str.split(/\.\s*/)
+
+      # Split at every period, removing the whitespace and returning the delimiter
+      assert_equal ["Hola Paco", ".", "Cuanto tiempo", ".", "Ole", "."], str.split(/(\.)\s*/)
+
+
+      # Split at every period, removing the whitespace and returning one of the delimiters
+      str = "¡Hola Paco! ¿Como andas? Ole…"
+      assert_equal ["¡Hola Paco", "!", "¿Como andas", "?", "Ole", "…"], str.split(/(\.|\?|\!|\…)\s*/)
+
+
+    end
+
+    should "strip::" do
+      # #remove leading and trailing whitespace
+      assert_equal "hola cuñao", "   hola cuñao   ".strip
     end
   end
 
   context "Enumerable" do
-    # Enumerable is a mixin that allows traversal, searching and sorting
-    # methods. The requirements are that the class that mixes it in must have a
-    # method "each()", and in some cases also the operator <=> (for max, min,
-    # sort)
+    # Enumerable is a mixin that allows traversal, searching and sorting methods. The
+    # requirements are that the class that mixes it in must have a method "each()", and in
+    # some cases also the operator <=> (for max, min, sort)
     #
     # Classes that implement each: Array, Hash, Range, String
     should "each::" do
@@ -1055,10 +1147,9 @@ termina_con_esto
     end
 
     should "any?:: enum.any? [{|obj| block } ] => true or false; ^::" do
-      # Passes each element of the collection to the given block and it returns
-      # TRUE if at least ONE of the collection members is not false or nil. It
-      # expects a block. If no block is passed any? returns TRUE if at least one
-      # element is not nil
+      # Passes each element of the collection to the given block and it returns TRUE if at
+      # least ONE of the collection members is not false or nil. It expects a block. If no
+      # block is passed any? returns TRUE if at least one element is not nil
       assert %w( ant bear cat ).any? {|word| word.length >= 3}
 
       def received_arguments?(*args)
@@ -1081,14 +1172,19 @@ termina_con_esto
     end
 
     should "detect::" do
-      # Returns the first in enum for which block is not false. If no object
-      # matches, calls ifnone and returns its result when it is specified, or
-      # returns nil
+      # Returns the first in enum for which block is not false. If no object matches,
+      # calls ifnone and returns its result when it is specified, or returns nil
 
       is_nil = (1..10).detect  {|i| i % 5 == 0 and i % 7 == 0 }
       is_35 = (1..100).detect {|i| i % 5 == 0 and i % 7 == 0 }
       assert_equal nil, is_nil
       assert_equal 35, is_35
+    end
+
+    should "sort_by::" do
+      #  Sorts enum using a set of keys generated by mapping the values in enum through the
+      #  given block. Not very efficient
+      assert_equal %w( fig pear apple ), %w{ apple pear fig }.sort_by {|word| word.length}
 
     end
   end
@@ -1101,8 +1197,8 @@ termina_con_esto
   end
 
   context "Set" do
-    # #A set is a collection ov values without duplicates. The elements have no
-    # order. A hash is a set of k/v pairs.
+    # A set is a collection of values without duplicates. The elements have no order. A
+    # hash is a set of k/v pairs.
 
     should "to_set:: Creating Any Enumerable can be converted to a Set" do
       assert_equal Set[5,1,2,3,4], (1..5).to_set
@@ -1126,8 +1222,8 @@ termina_con_esto
 
   context "Object" do
     should "blank?::" do
-      # object is blank if it’s false, empty, or a whitespace string. This
-      # simplifies: (a.nil? || a.empty?) to: if a.blank?
+      # object is blank if it’s false, empty, or a whitespace string. This simplifies:
+      # (a.nil? || a.empty?) to: if a.blank?
       assert ''.blank?
       assert ' '.blank?
       assert "".blank?
@@ -1178,8 +1274,7 @@ termina_con_esto
     end
 
     should "send:: obj.send(symbol [, args...]) => obj" do
-      # Invokes the method identified by symbol, passing it any arguments
-      # specified.
+      # Invokes the method identified by symbol, passing it any arguments specified.
       assert_equal 4, 3.send(:succ)
 
       #  Send bypasses method visibility constraints, it can invoke private and protected methods.
@@ -1219,24 +1314,22 @@ termina_con_esto
       # AddTitleBodyToPost title:string body:text published:boolean
     end
     should "generate a model" do
-      # ruby script/generate model Account ruby script/generate model post
-      # title:string body:text published:boolean
+      # ruby script/generate model Account ruby script/generate model post title:string
+      # body:text published:boolean
     end
     should "generate a scaffold" do
-      # ruby script/generate scaffold post title:string body:text
-      # published:boolean
+      # ruby script/generate scaffold post title:string body:text published:boolean
     end
     should "destroy something generated" do
-      # ruby script/destroy controller Posts ruby script/destroy migration
-      # CreatePost
+      # ruby script/destroy controller Posts ruby script/destroy migration CreatePost
       #
       # ruby script/destroy model Account
     end
   end
 
   context "Symbols" do
-    # Symbols are inmutable strings, which means they can't be change, they must
-    # be overwritten.
+    # Symbols are inmutable strings, which means they can't be change, they must be
+    # overwritten.
     should "convert symbols to strings and viceversa" do
       assert_equal "hola", :hola.to_s
       assert_equal :hola, "hola".intern
@@ -1298,8 +1391,7 @@ termina_con_esto
       assert_equal 28, multiply(7,4)
     end
     should "eval can receive a binding to set the context" do
-      # Bindings store the execution context at some particular place in the
-      # code.
+      # Bindings store the execution context at some particular place in the code.
       demo = Demo.new(99)
       assert_equal 99, eval("@secret", demo.get_binding)
     end
@@ -1310,13 +1402,12 @@ termina_con_esto
     end
 
     should "instance_eval:: " do
-      #   Evaluates a string or block within the context of the receiver (obj).
-      #   This is done by setting the variable self within the string or block
-      #   to obj, giving the code access to obj's instance variables.
+      #   Evaluates a string or block within the context of the receiver (obj). This is
+      #   done by setting the variable self within the string or block to obj, giving the
+      #   code access to obj's instance variables.
       #
-      # In the version of instance_eval that takes a String, the optional second
-      # and third parameters supply a filename and starting line number for
-      # compilation errors.
+      # In the version of instance_eval that takes a String, the optional second and third
+      # parameters supply a filename and starting line number for compilation errors.
 
       class Klass
         :attr_accessor
@@ -1350,9 +1441,9 @@ termina_con_esto
 
     should "class_eval:: AKA module_eval:: use it to define instance methods" do
       # include?::
-      #   mod.class_eval(string [, filename [, lineno]]) => obj filename and
-      #   lineno set the text for error messages Evaluates a string or block in
-      #   the context of the receiver
+      #   mod.class_eval(string [, filename [, lineno]]) => obj filename and lineno set
+      #   the text for error messages Evaluates a string or block in the context of the
+      #   receiver
       assert_equal 1, Demo.class_eval{ @@x = 1 }
       assert_equal 1, Demo.class_eval{ @@x }
 
@@ -1434,10 +1525,9 @@ end
 class ViewsTest < ActionView::TestCase
   context "Helpers" do
     should "content_for::" do
-      # Calling content_for stores a block of markup in an identifier for later
-      # use. You can make subsequent calls to the stored content in other
-      # templates or the layout by passing the identifier as an argument to
-      # yield.
+      # Calling content_for stores a block of markup in an identifier for later use. You
+      # can make subsequent calls to the stored content in other templates or the layout
+      # by passing the identifier as an argument to yield.
       content_for :name do
         3
       end
@@ -1445,26 +1535,70 @@ class ViewsTest < ActionView::TestCase
     end
 
     should "javascript_include_tag(*sources)::" do
-      # Returns an HTML script tag for each of the sources provided. You can
-      # pass 1-the filename (w or w/o ext), 2-the full path (relative to your
-      # document root). You can modify the html attrs of the SCRIPT tag by
-      # passing a hash as the last argument.
+      # Returns an HTML script tag for each of the sources provided. You can pass 1-the
+      # filename (w or w/o ext), 2-the full path (relative to your document root). You can
+      # modify the html attrs of the SCRIPT tag by passing a hash as the last argument.
 
       assert_dom_equal('<script type="text/javascript" src="/javascripts/xmlhr.js"></script>',
         javascript_include_tag("xmlhr"), "No extension")
     end
 
     should "content_tag::content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)" do
-      # Returns an HTML block tag of type name surrounding the content. Instead
-      # of passing the content as an argument, you can also use a block in which
-      # case, you pass your options as the second parameter
-      assert_equal '<div class="strong"><p>Hello world!</p></div>',
-          content_tag(:div, content_tag(:p, "Hello world!"), :class => "strong")
+      # Returns an HTML block tag of type name surrounding the content. Instead of passing
+      # the content as an argument, you can also use a block in which case, you pass your
+      # options as the second parameter
+      html = content_tag(:div, content_tag(:p, "Hello world!"), :class => "strong")
+      assert_equal '<div class="strong"><p>Hello world!</p></div>', html
+          
+      
       active_item = true
-      assert_equal '<div class="active">Hello World</div>',
-          content_tag(:div, "Hello World", :class => ("active" if active_item ))
+      html = content_tag(:div, "Hello World", :class => ("active" if active_item ))
+      assert_equal '<div class="active">Hello World</div>', html
+
+
+      # Using a block - notice collect:: is not the same as each::
+      html = content_tag :div do
+        ['a','b','c'].collect { |letter| content_tag(:scan, letter) }
+      end
+      assert_equal '<div><scan>a</scan><scan>b</scan><scan>c</scan></div>', html
+
+      # Concatenate two content_tag blocks - use parentheses
+      html = content_tag(:div)  +
+          (content_tag :div do
+          ['a','b','c'].collect { |letter| content_tag(:scan, letter) }
+        end)
+      assert_equal '<div></div><div><scan>a</scan><scan>b</scan><scan>c</scan></div>', html
     end
 
- 
+    should "capture::(&block)" do
+      # When a Passes a variable to be evaluated as the argument for the block defined in
+      # the template.
+      #      def render_join(collection, join_string, &block)
+      #        output = collection.collect do |item|
+      #          capture(item, &block)
+      #        end.join(join_string)
+      #        concat(output)
+      #      end
+      #   <%render_join(@items,'<br />') do |item|%>
+      #    <p>Item title: <%= item.title %></p>
+      #   <% end %>
+    end
+
+    should "concat::" do
+      # Outputs text in the view, concat "hello" is the equivalent of <%= "hello" %>. The
+      # block binding is deprecated. Whatever you pass to output_buffer will get rendered.
+      
+      self.output_buffer = ""
+      assert_equal "hola", concat('hola')
+      assert_equal "hola", output_buffer
+
+      def rounded_block(&block)
+        concat(
+          content_tag(:div) do
+            content_tag(:p) + content_tag(:scan) { capture(&block) } + content_tag(:em)
+          end
+        )
+      end
+    end
   end
 end
