@@ -1105,7 +1105,9 @@ termina_con_esto
       # If the pattern has groups, each element of the array is itself an array of
       # captured text.
       assert_equal ["a", "d"], "asdf".scan(/[a-e]/)
+
       assert_equal [["ruby"], ["regex"]], "hello ruby; hello regex".scan(/hello (\w+)/)
+      assert_equal ["ruby", "regex"], [["ruby"], ["regex"]].flatten
     end
 
     should "split:: I want to break up a string everytime a delimiter appears" do
@@ -1518,6 +1520,7 @@ termina_con_esto
     end
 
   end
+
 end
  
 
