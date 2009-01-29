@@ -4,7 +4,7 @@ require 'test_helper'
 
 class RubyExperimentTest < ActiveSupport::TestCase
 
-  context "Regexp" do
+  context "Regexp and Unicode UTF" do
     setup do 
       $KCODE = 'UTF8'
     end
@@ -107,6 +107,30 @@ class RubyExperimentTest < ActiveSupport::TestCase
 
     should "downcase:: " do
       assert_equal "á", "Á".mb_chars.downcase
+    end
+
+    should "length::" do
+      assert_not_equal 3, "así".length
+      assert_equal 3, "así".mb_chars.length
+    end
+  end
+
+  context "File" do
+    should "exist?::" do
+      # relative path, starting at root folder.
+      assert File.exist? 'empty_file.txt'
+    end
+
+    should "gets::" do
+      f = 'empty_file.txt'
+      words = ""
+      File.open(f, "r") do |infile|
+        while line = infile.gets
+          words << line
+        end
+      end
+
+      assert_equal '¡Hola João!', words
     end
   end
 end
