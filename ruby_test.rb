@@ -275,6 +275,12 @@ class RubyTest < ActiveSupport::TestCase
       def method_with_unlimited_arguments(*args)
         true
       end
+      def receives_arguments_and_hash(*args)
+        options = args.extract_options!
+      end
+      def receives_only_hash(*opts)
+        opts = opts.first.merge(opts.last) # e.g.
+      end
       some_ints = [1,2,3]
       assert method_with_unlimited_arguments(2)
       assert method_with_unlimited_arguments(some_ints)
@@ -824,6 +830,13 @@ termina_con_esto
       hash #you can assign the hash directly to collect because in this case it will return 1's and 2's
       assert_same_elements( {'a' => 2, 'b' => 2, 'c' => 1}, hash )
 
+      #   There's only an index variable in each, not in collect
+      nested_array = [[1,:a],[2, :b],[3, :c]]
+      ret = nested_array.collect { |number, letter|
+        true
+      }
+      assert ret
+
     end
 
     should "inject::" do
@@ -880,6 +893,27 @@ termina_con_esto
 
   context "Array:" do
 
+    should "unshift:: shift:: pop:: push::" do
+      # unshift & shift - from the front
+      # pop & push - from the back
+      assert_equal [0,1,2,3], [1,2,3].unshift(0)
+
+      assert_equal [-1,0,1,2,3], [1,2,3].unshift(-1, 0)
+
+      arr = [1,2,3]
+      assert_equal 1, arr.shift
+      assert_equal [2,3], arr
+      # can't do arr.shift(2) ??
+
+
+      arr = [1,2,3]
+      assert_equal 3, arr.pop
+      assert_equal [1,2], arr
+
+      arr = [1,2,3]
+      assert_equal [1,2,3,4], arr.push(4)
+    end
+
     should "creation, Kernel#Array" do
       #   Tries to coerce its arguments into an array
       assert_equal [1,2,3], Array([1,2,3])
@@ -910,13 +944,21 @@ termina_con_esto
     end
 
     should "Array#extract_options!::" do
-      #   Removes and returns the last element in the array if it’s a hash, otherwise
-      #   returns a blank hash {}
-      def show_options(*args)
-        args.extract_options!
+      #   ARRAY => HASH Removes and returns the last element in the array if it’s a hash,
+      #   otherwise returns a blank hash {}
+      def show_options(*args) #the splat op. wraps all arguments in an ARRAY => price to pay for optional arguments
+        assert args.kind_of?(Array)
+        opts = args.extract_options! # we have extracted the hash (if there is one) from the array
       end
+      
+      hash = {:a => :b}
+      assert hash.kind_of?(Hash)
+
+      # args[0] == 1, args[1] == 2
       assert_equal({}, show_options(1,2))
-      assert_equal({:a => :b}, show_options(1,2,:a => :b))
+
+      # args[0] == 1, args[1] == 2, args[2] = {:a => :b}
+      assert_equal(hash, show_options(1,2,:a => :b))
     end
 
     should "Array#<<:: add item" do
@@ -935,7 +977,7 @@ termina_con_esto
       assert_equal [1,2], arr
     end
 
-    should "sort::" do
+    should "sort:: sort_by::" do
       #   Returns a new array created by sorting self. Comparisons for the sort will be
       #   done using the <=> operator or using an optional code block. The block
       #   implements a comparison between a and b, returning -1, 0, or #+1
@@ -943,6 +985,16 @@ termina_con_esto
       assert_equal [1,2,3,4,5], arr.sort
 
       assert_equal [5,4,3,2,1], arr.sort { |first, second| second <=> first }
+
+    end
+
+    should "assoc:: rassoc::" do
+      #   rassoc:: Compares argument with the second element of each contained array using
+      #   ==. Returns the first contained array that matches it. assoc:: same thing, but
+      #   the first element.
+      arr = [[:a,3], [:b,4], [:c,5]]
+      assert_equal [:a,3], arr.assoc(:a)
+      assert_equal [:a,3], arr.rassoc(3)
     end
   end
 
@@ -963,7 +1015,7 @@ termina_con_esto
       assert_equal [36, 8], @vehicles_hash.values_at(:cars, :boats)
     end
 
-    should "merge::" do
+    should "merge!:: AKA update::" do
       #   merges the right into the left.
       h1 = { :a => 100, :b => 200 }
       h2 = { :b => 300, :c => 400 }
@@ -973,12 +1025,29 @@ termina_con_esto
       
     end
 
+    should "first:: last::" do
+      #   Neither array nor hash have .next
+      array = []
+      hash = {}
+      assert array.respond_to?(:first), "Array responds to first"
+      assert array.respond_to?(:last), "Array responds to last"
+      assert_false hash.respond_to?(:first), "Hash doesn't respond to first"
+      assert_false hash.respond_to?(:last), "Hash doesn't respond to last"
+    end
+
     should "reverse_merge::" do
       #   Merges the left into the right
       h1 = {:a => 100, :b => 200}
       h2 = {:b => 300, :c => 400}
       h3 = h1.reverse_merge(h2)
       assert_equal Hash[ :a => 100, :b => 200, :c => 400 ], h3
+    end
+
+    should "" do
+      #   Adds the contents of other_hash to hsh. If no block is specified entries with
+      #   duplicate keys are overwritten with the values from other_hash, otherwise the
+      #   value of each duplicate key is determined by calling the block with the key, its
+      #   value in hsh and its value in other_hash.
     end
 
     should "delete:: deletes and returns the value matching the key" do
@@ -1185,10 +1254,34 @@ termina_con_esto
 
     should "sort_by::" do
       #  Sorts enum using a set of keys generated by mapping the values in enum through the
-      #  given block. Not very efficient
+      #  given block. Not very efficient.
+      #
+      #  Ascending order by default
       assert_equal %w( fig pear apple ), %w{ apple pear fig }.sort_by {|word| word.length}
 
+      # Descending order
+      assert_equal %w( apple pear fig ), %w{ apple pear fig }.sort_by {|word| -word.length}
+
     end
+
+    should "enum_for:: AKA to_enum::" do
+      # Create a new enumerator instance. You can choose between each_slice, each_cons and
+      # each_with_index.
+      assert_equal %w( x0 y1 z2 ),
+          %w( x y z).enum_for(:each_with_index).map {|letter, index| letter + index.to_s }
+
+    end
+
+    should "each_slice::" do
+      # Processes the array by pairs, triplets, etc
+      assert_equal [2,5], [1,1,2,3].enum_for(:each_slice,2).map {|first, second| first + second}
+    end
+
+    should "each_cons::" do
+      # Processes the array by pairs, triplets, etc OF CONSECUTIVE NUMBERS.
+      assert_equal [2,3,5], [1,1,2,3].enum_for(:each_cons,2).map {|first, second| first + second}
+    end
+
   end
 
   context "Range" do
