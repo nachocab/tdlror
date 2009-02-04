@@ -18,10 +18,10 @@ class RubyTest < ActiveSupport::TestCase
 
       # One l-value, multiple r-values
       x = 1,2,3
-      x.should == [1,2,3]
+      assert_equal x, [1,2,3]
 
       x, = 1,2,3;
-      x.should == 1
+      assert_equal x, 1
       #      assert x == 1
 
       # Multiple l-values, one array r-value
@@ -78,12 +78,13 @@ class RubyTest < ActiveSupport::TestCase
         [a,b]
       end
       x,y = return_two_values
-      x.should == 2; y.should == 3
+      assert_equal x,2
+      assert_equal y,3
+
 
       # See the splat operator for more assignments
 
     end
-
 
     should "unless::" do
       # Unless means: execute the LEFT unless the RIGHT evaluates to TRUE
@@ -107,8 +108,11 @@ class RubyTest < ActiveSupport::TestCase
     should "super:: Chaining" do
       # It calls the method in the superclass with the same name, sending it the current
       # arguments. (The superclass doesn't have to define it, it could inherit it from an
-      # ancestor.) Unless you specify what arguments get passed, they all do.
-
+      # ancestor.)
+      #   super      => All arguments get passed when calling the method in the superclass
+      #   super()    => No arguments get passed when calling the method in the superclass
+      #   super(x,y) => x and y get passed when calling the method in the superclass
+ 
       class Point
         def initialize(x,y)
           @x = x
@@ -118,7 +122,7 @@ class RubyTest < ActiveSupport::TestCase
 
       class Point3D < Point
         def initialize(x,y,z)
-          super(x,y)
+          super(x,y) # Point3D has access to instance variables @x and @y, so @x, @y = super(x,y) is unnecessary.
           @z = z
         end
         def show
@@ -129,6 +133,19 @@ class RubyTest < ActiveSupport::TestCase
       p3d = Point3D.new(2,3,4)
       assert_equal "2 3 4", p3d.show
 
+      ############
+      class Parent
+        def age
+          30
+        end
+      end
+      class Child < Parent
+        def age
+          super - 20
+        end
+      end
+      c = Child.new
+      assert_equal 10, c.age
     end
 
     should "ensure::" do
@@ -181,6 +198,12 @@ class RubyTest < ActiveSupport::TestCase
       def existing; 3; end
       alias new_name existing
       assert_equal 3, new_name
+    end
+
+    should "configure ruby" do
+      # gem sources -a http://gems.github.com # add sources
+      # set HOME=.
+      # gem install sqlite3-ruby --version 1.2.3
     end
 
   end
@@ -250,9 +273,23 @@ class RubyTest < ActiveSupport::TestCase
       vehicles_hash_unnested = Hash[*vehicles_nested.flatten]
       assert_equal({ :planes => 21, :cars => 36 }, vehicles_hash_unnested)
 
-      # 4 - Convert Hash to array by exploding hash
+      # 4 - Convert Hash to array by exploding hash. Not a good idea. Better use to_a
       vehicles_array = *{ :planes => 21, :cars => 36 }
       assert_same_elements [ [:planes, 21], [:cars, 36] ], vehicles_array
+
+      # 4.1 - special case, with only one element. Convert hash to array.
+      h = {'paco' => 343}
+      a = *h
+      b = h.to_a
+      assert_equal ['paco',343], a
+      assert_equal [['paco',343]], b
+
+      h = {'paco' => 343, 'luis' => 454}
+      a = *h
+      b = h.to_a
+      assert_equal [['paco',343],['luis',454]], a
+      assert_equal a, b
+
 
       # 5 - Use in a case statement - explode array
       WILD = %w( lion ñu )
@@ -445,8 +482,9 @@ class RubyTest < ActiveSupport::TestCase
       esq2 = Esquiva.new
 
       assert_equal "esquivando", esq1.patada(esq2), "Calling protected method"
-      lambda { esq1.esquivar }. should raise_error(NoMethodError) # esquivar is protected
-
+      assert_raise NoMethodError do
+        esq1.esquivar # esquivar is protected
+      end
       #      def safe_send(receiver, method, message) # regular send bypasses visibility rules
       #        eval "receiver.#{method}"  # receiver.method
       #      rescue => e
@@ -672,7 +710,9 @@ termina_con_esto
       assert_false external_proc.call(1), "the block returns false"
 
       #   any? expects a block and we're sending it a proc
-      lambda {[1,4,7].any? external_proc }.should raise_error(ArgumentError)
+      assert_raise ArgumentError do
+        [1,4,7].any? external_proc
+      end
 
       assert [1,4,7].any?(&external_proc), "We turn the proc back into a block"
     end
@@ -743,7 +783,9 @@ termina_con_esto
       saved_proc_with_error = Proc.new { return 3 }
 
       #   Can't call a proc that returns a value
-      lambda {saved_proc_with_error.call}.should raise_error(LocalJumpError)
+      assert_raise LocalJumpError do
+        saved_proc_with_error.call
+      end
 
       # either remove the return, or use a lambda
       saved_proc = Proc.new { 3 } # remove the return
@@ -889,6 +931,15 @@ termina_con_esto
       #   Hash.each_pair.
     end
 
+    should "next::" do
+      # While inside a loop, you can always skip an element
+      add = 0
+      [1,nil,"djd",3,4].each do |number|
+        next unless number.kind_of?(Fixnum) #Skip if not a number
+        add += number
+      end
+      assert_equal 8, add
+    end
   end
 
   context "Array:" do
@@ -977,7 +1028,7 @@ termina_con_esto
       assert_equal [1,2], arr
     end
 
-    should "sort:: sort_by::" do
+    should "Array#sort:: sort_by::" do
       #   Returns a new array created by sorting self. Comparisons for the sort will be
       #   done using the <=> operator or using an optional code block. The block
       #   implements a comparison between a and b, returning -1, 0, or #+1
@@ -1130,7 +1181,7 @@ termina_con_esto
       assert_same_elements [[:a,1], [:b,2]], converted_array
     end
 
-    should "sort::" do
+    should "Hash#sort::" do
       # converts the hash into an array of two-element arrays and calls
       # Array#sort::
       hash = { :a => 5, :b => 3}
@@ -1268,7 +1319,7 @@ termina_con_esto
       # Create a new enumerator instance. You can choose between each_slice, each_cons and
       # each_with_index.
       assert_equal %w( x0 y1 z2 ),
-          %w( x y z).enum_for(:each_with_index).map {|letter, index| letter + index.to_s }
+        %w( x y z).enum_for(:each_with_index).map {|letter, index| letter + index.to_s }
 
     end
 
@@ -1334,23 +1385,24 @@ termina_con_esto
       a = A.new; b = A.new
       
       # == same object (usually overriden in descendant classes)
-      1.should be 1.0
-      [].should be []
-      "".should be ""
-      a.should_not be b # == is synonymous with eql? for Object instances.
+      assert 1 == 1.0
+      assert [] == []
+      assert "" == ""
+      assert_false a == b
 
       # eql? same value
-      1.should_not eql 1.0
-      [].should eql []
-      "".should eql ""
-      a.should_not eql b # == is synonymous with eql? for Object instances.
+      assert_false 1.eql?  1.0
+      assert [].eql? []
+      assert "".eql? ""
+      assert_false a.eql? b # == is synonymous with eql? for Object instances.
 
       # equal? same object (should never be overriden in descendant classes)
-      1.should_not equal 1.0
-      [].should_not equal []
-      "".should_not equal ""
-      a.should_not equal b
-      a.should equal a
+      assert_false 1.equal? 1.0
+      assert_false [].equal? []
+      assert_false "".equal? ""
+      assert_false a.equal? b
+      
+      assert a.equal? a
     end
 
     should "respond_to?:: obj.respond_to?(symbol, include_private=false) => true or false" do
@@ -1660,7 +1712,7 @@ class ViewsTest < ActionView::TestCase
 
       # Concatenate two content_tag blocks - use parentheses
       html = content_tag(:div)  +
-          (content_tag :div do
+        (content_tag :div do
           ['a','b','c'].collect { |letter| content_tag(:scan, letter) }
         end)
       assert_equal '<div></div><div><scan>a</scan><scan>b</scan><scan>c</scan></div>', html
@@ -1698,3 +1750,26 @@ class ViewsTest < ActionView::TestCase
     end
   end
 end
+
+
+#
+#\action_controller
+#  |-base.rb
+#      module ActionController
+#        class Base
+#          def url_for(options = {})
+#  \routing
+#     |-builder.rb
+#        module ActionController
+#           module Routing --> used as a namespace to define a bunch of classes. Never: 'include Routing'
+#             class Routebuilder
+#               def segment_for(string)
+#
+#module AC
+#  module Routing
+#    module Optimisation
+#      def generate_optimisation_block(route,kind)
+#      class Optimiser
+#      class PositionalArguments < Optimiser
+#      class PositionalArgumentsWithAdditionalParams < PositionalArguments
+#      OPTIMISERS = [PositionalArguments, PositionalArgumentsWithAdditionalParams]
