@@ -206,6 +206,25 @@ class RubyTest < ActiveSupport::TestCase
       # gem install sqlite3-ruby --version 1.2.3
     end
 
+    should "case::" do
+      a = case ['an_array']
+      when is_a?(Array)
+        'WRONG WAY OF DOING IT'
+      when Array
+        'RIGHT'
+      when b = ['an option hash']
+        b # better than repeating ['an option hash']
+      else
+        'other'
+      end
+      assert_equal 'RIGHT', a
+
+      b = case 'a'
+      when 'a','b'
+        'yes'
+      end
+      assert_equal 'yes', b
+    end
   end
 
   context "Kernel" do
@@ -758,15 +777,15 @@ termina_con_esto
       assert_false defined?(d), "d is not defined"
     end
 
-    should "block_given?:: checks to see if a block is sent along with the call to the function" do
+    should "block_given?:: checks to see if a block has been sent as an argument" do
       def did_you_pass_me_a_block?()
         block_given? ? yield : "No block"
       end
 
       assert_equal "No block", did_you_pass_me_a_block?
       assert_equal "Yes, I did", did_you_pass_me_a_block? { 'Yes, I did' }
-      proc = Proc.new { 'Not really. I passed you a proc' }
-      assert_equal "Not really. I passed you a proc", did_you_pass_me_a_block?(&proc)
+      proc = Proc.new { 'Kind of. I passed you a proc' }
+      assert_equal "Kind of. I passed you a proc", did_you_pass_me_a_block?(&proc)
     end
 
     should "to_proc::" do
@@ -940,6 +959,12 @@ termina_con_esto
       end
       assert_equal 8, add
     end
+
+    should "Array#delete_if::" do
+      arr = [1,2,3]
+      arr.delete_if { |num| num > 2 }
+      assert_equal [1,2], arr
+    end
   end
 
   context "Array:" do
@@ -952,7 +977,7 @@ termina_con_esto
       assert_equal [-1,0,1,2,3], [1,2,3].unshift(-1, 0)
 
       arr = [1,2,3]
-      assert_equal 1, arr.shift
+      assert_equal 1, arr.shift # take out the first
       assert_equal [2,3], arr
       # can't do arr.shift(2) ??
 
@@ -1022,10 +1047,17 @@ termina_con_esto
       assert_equal [1,2,3], [1,nil,2,nil,3].compact
     end
 
-    should "delete_if::" do
-      arr = [1,2,3]
-      arr.delete_if { |num| num > 2 }
-      assert_equal [1,2], arr
+    should "count::" do
+      ary = [1,10,3,10,4,5]
+      #      In ruby 1.8.7
+      #      assert_equal 2, ary.count(10) #counts number of elems == to obj.
+      #      assert_equal 3, ary.count{|x| x > 4} #counts number of elems that satisfy condition
+    end
+
+    should "Array#delete::" do
+      arr = [1,2,3,2,4,2]
+      assert_equal 2, arr.delete(2)
+      assert_equal [1,3,4], arr 
     end
 
     should "Array#sort:: sort_by::" do
@@ -1047,13 +1079,34 @@ termina_con_esto
       assert_equal [:a,3], arr.assoc(:a)
       assert_equal [:a,3], arr.rassoc(3)
     end
+
+    should "zip::" do
+      # array.zip(arg, ...)                   -> an_array
+      # array.zip(arg, ...) {| arr | block }  -> nil
+      #      Converts args to arrays and merges elements of self with corresponding
+      #      elements from each argument.
+      #      This generates a sequence of (self.size)-element arrays,
+      #        where n is one more that the count of arguments. If the size of any argument is less
+      #      than enumObj.size, nil values are supplied. If a block given, it is invoked for each output
+      #        array, otherwise an array of arrays is returned.
+      a = [ 4, 5, 6 ]
+      b = [ 7, 8, 9 ]
+
+      assert_equal [[1, 4, 7], [2, 5, 8], [3, 6, 9]], [1,2,3].zip(a, b)
+      assert_equal [[1, 4, 7], [2, 5, 8]], [1,2].zip(a,b)
+      assert_equal [[4,1,8], [5,2,nil], [6,nil,nil]], a.zip([1,2],[8])
+    end
   end
 
   context "Hash:" do
     setup do
       @vehicles_hash = { :cars => 36, :boats => 8, :trains => 12, :planes => 21 }
     end
-
+    should "hash#delete_if" do
+      hash = { :a => 3 , :b => 5, :c => ""}
+      aux = hash.delete_if { |key, value| value.blank? }
+      assert_equal Hash[:a => 3 , :b => 5], hash
+    end
     should "select::" do
       #   Returns a new ARRAY consisting of [key,value] pairs for which the block returns
       #   true
@@ -1094,14 +1147,14 @@ termina_con_esto
       assert_equal Hash[ :a => 100, :b => 200, :c => 400 ], h3
     end
 
-    should "" do
+    should "merge:: update::" do
       #   Adds the contents of other_hash to hsh. If no block is specified entries with
       #   duplicate keys are overwritten with the values from other_hash, otherwise the
       #   value of each duplicate key is determined by calling the block with the key, its
       #   value in hsh and its value in other_hash.
     end
 
-    should "delete:: deletes and returns the value matching the key" do
+    should "Hash#delete:: deletes and returns the value matching the key" do
       h1 = { :a => 100, :b => 200 }
       assert_equal 100, h1.delete(:a)
       assert_equal Hash[:b => 200], h1
@@ -1280,9 +1333,10 @@ termina_con_esto
       assert received_arguments?(1,2,"hola")
       assert_false received_arguments?
       
-      assert %w( ant bear cat ).any? ^ nil # ^ is xor:  t ^ f => TRUE
-      assert [].any? ^  "block" #                       f ^ t => TRUE
-      assert_false %w( ant bear cat ).any? ^ "block" #  t ^ t => FALSE
+      assert %w( ant bear cat ).any? ^ nil # ^ is xor:  TRUE  ^ FALSE => TRUE
+      assert [].any? ^  "block" #                       FALSE ^ TRUE  => TRUE
+      assert_false %w( ant bear cat ).any? ^ "block" #  TRUE  ^ TRUE  => FALSE
+      assert_false false ^ false                     #  FALSE ^ FALSE => FALSE
 
     end
 
@@ -1367,6 +1421,24 @@ termina_con_esto
   end
 
   context "Object" do
+
+    should "clone::" do
+      # This duplication doesn't happen with numbers
+      # (I think it's only classes and methods)
+      
+      arr1 = [1,2,3]
+      arr2 = arr1
+      arr2.pop
+      assert_equal [1,2], arr1
+      assert_equal [1,2], arr2
+
+      arr1 = [1,2,3]
+      arr2 = arr1.clone
+      arr2.pop
+      assert_equal [1,2,3], arr1
+      assert_equal [1,2], arr2
+    end
+
     should "blank?::" do
       # object is blank if it’s false, empty, or a whitespace string. This simplifies:
       # (a.nil? || a.empty?) to: if a.blank?

@@ -109,9 +109,53 @@ class RubyExperimentTest < ActiveSupport::TestCase
       assert_equal "á", "Á".mb_chars.downcase
     end
 
-    should "length::" do
+    should "length:: aka size::" do
       assert_not_equal 3, "así".length
       assert_equal 3, "así".mb_chars.length
+    end
+
+    # ActiveSupport::Multibyte::Chars
+    should "normalize::" do
+      # Unicode Normalization Forms
+      # NFD  - (TILDES)               - Canonical Decomposition                              - chars decomposed by canonical equivalence
+      # NFC  - (NOTHING)              - Canonical Decomposition     + Canonical Composition
+      # NFKD - (LIGATURES AND TILDES) - Compatibility Decomposition                          - chars decomposed by compatibility equivalence
+      # NFKC - (LIGATURES)            - Compatibility Decomposition + Canonical Composition
+      # Canonical equivalence     - equivalency between characters that represent the
+      # same character.Same visual appearance. Ex: ñ == n + ~.
+      # Compatibility equivalence - weaker equivalency, they may have different visual
+      # appearance. Ex: ﬁ ~~ fi
+      # assert_equal "ﬁe´",  "ﬁé".mb_chars.normalize(:d).to_s
+      assert_equal "ﬁé",   "ﬁé".mb_chars.normalize(:c).to_s
+      # assert_equal "fie´", "ﬁé".mb_chars.normalize(:kd).to_s
+      assert_equal "fié",  "ﬁé".mb_chars.normalize(:kc).to_s
+
+      # problem:
+      assert_equal "Æ",  "Æ".mb_chars.normalize(:d).to_s
+      assert_equal "Æ",   "Æ".mb_chars.normalize(:c).to_s
+      assert_equal "Æ", "Æ".mb_chars.normalize(:kd).to_s
+      assert_equal "Æ",  "Æ".mb_chars.normalize(:kc).to_s
+
+    end
+
+    should "str.gsub::(pattern,replacement)" do
+      #Returns a copy of str with all occurrences of pattern replaced with either
+      #replacement or the value of the block. The pattern will typically be a Regexp;
+      #if it is a String then no regular expression metacharacters will be interpreted
+      #(that is /\d/ will match a digit, but '\d' will match a backslash followed by
+      #a 'd').  If a string is used as the replacement, special variables from the
+      #match (such as $& and $1) cannot be substituted into it, as substitution into
+      #the string occurs before the pattern match starts. However, the sequences \1,
+      #\2, and so on may be used to interpolate successive groups in the match.  In
+      # block form, the current match string is passed in as a parameter, and variables
+      # such as $1, $2, $`, $&, and $' will be set appropriately. The value returned by
+      # the block will be substituted for the match on each call.  The result inherits
+      #  any tainting in the original string or any supplied replacement string.
+      # "hello".gsub(/[aeiou]/, '*')#=> "h*ll*"
+      # "hello".gsub(/([aeiou])/, '<\1>')#=> "h<e>ll<o>"
+      # "hello".gsub(/./) {|s| s[0].to_s + ' '} #=> "104 101 108 108 111 "
+      assert_equal "hl", "hola".gsub(/[oa]/,"")
+      assert_equal "hl", "hola".gsub(/[^hl]/,"")
     end
   end
 
@@ -132,7 +176,121 @@ class RubyExperimentTest < ActiveSupport::TestCase
 
       assert_equal '¡Hola João!', words
     end
+
+
   end
+
+  context "ways to specify arguments" do
+    should "myFunction(*args)" do
+      # Ex: myFunction(:argument)
+      #   options == {}
+      #   args.first == :argument #=> args == [:argument], that's why we use first.
+      # Ex: myFunction(:argument, :conditionA => true, :conditionB => false)
+      #   options == {:conditionA => true, :conditionB => false}
+      #   args.first == :argument
+      # The first argument determines what function gets called with the remaining options.
+
+      # Only use extract_options when receiving (*args) or (*args, &block)
+      def extract_options! # removes and returns the last element if it's a hash, otherwise returns {}
+        last.is_a?(::Hash) ? pop : {}
+      end
+
+      VALID_FIND_OPTIONS = [ :conditions, :include, :joins, :limit, :offset,
+        :order, :select, :readonly, :group, :from, :lock ]
+
+      def validate_find_options(options) #:nodoc:
+        options.assert_valid_keys(VALID_FIND_OPTIONS)
+      end
+
+      def assert_valid_keys(*valid_keys)
+        unknown_keys = keys - [valid_keys].flatten
+        raise(ArgumentError, "Unknown key(s): #{unknown_keys.join(", ")}") unless unknown_keys.empty?
+      end
+
+      def find(*args)
+        options = args.extract_options!
+        validate_find_options(options)
+
+        case args.first
+        when :first then find_initial(options)
+        when :last  then find_last(options)
+        when :all   then find_every(options)
+        else             find_from_ids(args, options)
+        end
+      end
+
+      def find_initial(options)
+        options.update(:limit => 1)
+        find_every(options).first
+      end
+
+      def find_last(options)
+        order = options[:order]
+
+        if order
+          order = reverse_sql_order(order)
+        elsif !scoped?(:find, :order)
+          order = "#{table_name}.#{primary_key} DESC"
+        end
+
+        find_initial(options.merge({ :order => order }))
+      end
+    end
+
+    should "myFunction(symbol|{key => value})" do
+      # this accepts:
+      #  myFunction :ok
+      #  myFunction :status => 404
+      def myFunction(*args)
+        options = args.extract_options!
+        status = interpret_status(args.shift || options.delete(:status))
+      end
+    end
+
+    should "myFunction(symbol)" do
+      # If instead of using opts = {} we had used *opts, when opts wasn't specified, it would have become [] which
+      #  would make assert_valid_keys fail, because it has to be applied on a hash.
+      #   Person.calculate(:count, :all) # The same as Person.count
+      #   Person.average(:age) # SELECT AVG(age) FROM people...
+      #   Person.minimum(:age, :conditions => ['last_name != ?', 'Drake']) # Selects the minimum age for everyone with a last name other than 'Drake'
+      #   Person.minimum(:age, :having => 'min(age) > 17', :group => :last_name) # Selects the minimum age for any family without any minors
+      #   Person.sum("2 * age")
+      def maximum(column_name, options = {})
+        calculate(:max, column_name, options)
+      end
+
+      def calculate(operation, column_name, options = {})
+        validate_calculation_options(operation, options)
+        column_name     = options[:select] if options[:select]
+        column_name     = '*' if column_name == :all
+        column          = column_for column_name
+        catch :invalid_query do
+          if options[:group]
+
+          end
+        end
+      end
+    end
+
+    should "myFunction(action = nil, *args):: BAD PRACTICE" do
+      # Wanting to do this is a mistake:
+      # myFunction('a')
+      # myFunction(:unique)
+      # myFunction(:used_more_than => 3)
+      #
+      # much better to simplify it
+      # myFunction(*args)
+      # myFunction(:starting_with => 'a') + extract_options
+      #
+      # or do this:
+      # myFunction(elem, *args)
+      #
+
+
+    end
+
+  end
+
 end
  
 
