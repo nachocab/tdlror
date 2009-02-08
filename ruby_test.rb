@@ -1,7 +1,5 @@
 require 'test_helper'
 
-# Use include to add modules
-
 class RubyTest < ActiveSupport::TestCase
   # Glossary
   #
@@ -196,8 +194,8 @@ class RubyTest < ActiveSupport::TestCase
   
     should "alias:: " do
       def existing; 3; end
-      alias new_name existing
-      assert_equal 3, new_name
+      alias old_existing existing
+      assert_equal 3, old_existing
     end
 
     should "configure ruby" do
@@ -967,290 +965,7 @@ termina_con_esto
     end
   end
 
-  context "Array:" do
-
-    should "unshift:: shift:: pop:: push::" do
-      # unshift & shift - from the front
-      # pop & push - from the back
-      assert_equal [0,1,2,3], [1,2,3].unshift(0)
-
-      assert_equal [-1,0,1,2,3], [1,2,3].unshift(-1, 0)
-
-      arr = [1,2,3]
-      assert_equal 1, arr.shift # take out the first
-      assert_equal [2,3], arr
-      # can't do arr.shift(2) ??
-
-
-      arr = [1,2,3]
-      assert_equal 3, arr.pop
-      assert_equal [1,2], arr
-
-      arr = [1,2,3]
-      assert_equal [1,2,3,4], arr.push(4)
-    end
-
-    should "creation, Kernel#Array" do
-      #   Tries to coerce its arguments into an array
-      assert_equal [1,2,3], Array([1,2,3])
-      assert_equal [1,2,3], Array(1..3)
-      assert_equal [3], Array(3) # Alternative syntax
-    end
-
-    should "join:: Convert array to string" do
-      assert_equal "a-b-c", %w(a b c).join("-")
-      assert_equal "a-b-c", %w(a b c) * "-", "see the splat operator"
-      assert_equal "A-B-C", %w(a b c).collect{ |letra| letra.upcase! }.join("-")
-    end
-
-    should "to_sentence::" do
-      assert_equal "Luis, Juan y Pedro", %w(Luis Juan Pedro).to_sentence(:connector => 'y', :skip_last_comma => true)
-    end
-
-    should "in_groups_of::(size, fill_with)" do
-      #   Group elements of the array into fixed-size groups
-      assert_equal [[1,2,3], [4,5,6], [7,8,nil]], (1..8).to_a.in_groups_of(3)
-      assert_equal [[1,2,3], [4,5,6], [7,8,-1]], (1..8).to_a.in_groups_of(3, -1)
-    end
-
-    should "split::" do
-      #   splits on a value (and removes it) or on the result of a block
-      assert_equal [[1,2,3],[5,6,7,8]], (1..8).to_a.split(4)
-      assert_equal [[1,2,3],[5,6,7,8]], (1..8).to_a.split { |i| i == 4}
-    end
-
-    should "Array#extract_options!::" do
-      #   ARRAY => HASH Removes and returns the last element in the array if it’s a hash,
-      #   otherwise returns a blank hash {}
-      def show_options(*args) #the splat op. wraps all arguments in an ARRAY => price to pay for optional arguments
-        assert args.kind_of?(Array)
-        opts = args.extract_options! # we have extracted the hash (if there is one) from the array
-      end
-      
-      hash = {:a => :b}
-      assert hash.kind_of?(Hash)
-
-      # args[0] == 1, args[1] == 2
-      assert_equal({}, show_options(1,2))
-
-      # args[0] == 1, args[1] == 2, args[2] = {:a => :b}
-      assert_equal(hash, show_options(1,2,:a => :b))
-    end
-
-    should "Array#<<:: add item" do
-      a = []
-      assert_equal [2], a << 2
-    end
-
-    should "compact::" do
-      #   removes nil values
-      assert_equal [1,2,3], [1,nil,2,nil,3].compact
-    end
-
-    should "count::" do
-      ary = [1,10,3,10,4,5]
-      #      In ruby 1.8.7
-      #      assert_equal 2, ary.count(10) #counts number of elems == to obj.
-      #      assert_equal 3, ary.count{|x| x > 4} #counts number of elems that satisfy condition
-    end
-
-    should "Array#delete::" do
-      arr = [1,2,3,2,4,2]
-      assert_equal 2, arr.delete(2)
-      assert_equal [1,3,4], arr 
-    end
-
-    should "Array#sort:: sort_by::" do
-      #   Returns a new array created by sorting self. Comparisons for the sort will be
-      #   done using the <=> operator or using an optional code block. The block
-      #   implements a comparison between a and b, returning -1, 0, or #+1
-      arr = [2,4,3,5,1]
-      assert_equal [1,2,3,4,5], arr.sort
-
-      assert_equal [5,4,3,2,1], arr.sort { |first, second| second <=> first }
-
-    end
-
-    should "assoc:: rassoc::" do
-      #   rassoc:: Compares argument with the second element of each contained array using
-      #   ==. Returns the first contained array that matches it. assoc:: same thing, but
-      #   the first element.
-      arr = [[:a,3], [:b,4], [:c,5]]
-      assert_equal [:a,3], arr.assoc(:a)
-      assert_equal [:a,3], arr.rassoc(3)
-    end
-
-    should "zip::" do
-      # array.zip(arg, ...)                   -> an_array
-      # array.zip(arg, ...) {| arr | block }  -> nil
-      #      Converts args to arrays and merges elements of self with corresponding
-      #      elements from each argument.
-      #      This generates a sequence of (self.size)-element arrays,
-      #        where n is one more that the count of arguments. If the size of any argument is less
-      #      than enumObj.size, nil values are supplied. If a block given, it is invoked for each output
-      #        array, otherwise an array of arrays is returned.
-      a = [ 4, 5, 6 ]
-      b = [ 7, 8, 9 ]
-
-      assert_equal [[1, 4, 7], [2, 5, 8], [3, 6, 9]], [1,2,3].zip(a, b)
-      assert_equal [[1, 4, 7], [2, 5, 8]], [1,2].zip(a,b)
-      assert_equal [[4,1,8], [5,2,nil], [6,nil,nil]], a.zip([1,2],[8])
-    end
-  end
-
-  context "Hash:" do
-    setup do
-      @vehicles_hash = { :cars => 36, :boats => 8, :trains => 12, :planes => 21 }
-    end
-    should "hash#delete_if" do
-      hash = { :a => 3 , :b => 5, :c => ""}
-      aux = hash.delete_if { |key, value| value.blank? }
-      assert_equal Hash[:a => 3 , :b => 5], hash
-    end
-    should "select::" do
-      #   Returns a new ARRAY consisting of [key,value] pairs for which the block returns
-      #   true
-      vehicles_array = [[:cars, 36], [:planes, 21]]
-      assert_same_elements vehicles_array, @vehicles_hash.select { |key, value| value > 20 }
-    end
-
-    should "values_at::" do
-      #   Return an array containing the values associated with the given keys
-      assert_equal [36, 8], @vehicles_hash.values_at(:cars, :boats)
-    end
-
-    should "merge!:: AKA update::" do
-      #   merges the right into the left.
-      h1 = { :a => 100, :b => 200 }
-      h2 = { :b => 300, :c => 400 }
-      h3 = h1.merge(h2)
-      assert_equal Hash[ :a => 100, :b => 300, :c => 400 ], h3
-
-      
-    end
-
-    should "first:: last::" do
-      #   Neither array nor hash have .next
-      array = []
-      hash = {}
-      assert array.respond_to?(:first), "Array responds to first"
-      assert array.respond_to?(:last), "Array responds to last"
-      assert_false hash.respond_to?(:first), "Hash doesn't respond to first"
-      assert_false hash.respond_to?(:last), "Hash doesn't respond to last"
-    end
-
-    should "reverse_merge::" do
-      #   Merges the left into the right
-      h1 = {:a => 100, :b => 200}
-      h2 = {:b => 300, :c => 400}
-      h3 = h1.reverse_merge(h2)
-      assert_equal Hash[ :a => 100, :b => 200, :c => 400 ], h3
-    end
-
-    should "merge:: update::" do
-      #   Adds the contents of other_hash to hsh. If no block is specified entries with
-      #   duplicate keys are overwritten with the values from other_hash, otherwise the
-      #   value of each duplicate key is determined by calling the block with the key, its
-      #   value in hsh and its value in other_hash.
-    end
-
-    should "Hash#delete:: deletes and returns the value matching the key" do
-      h1 = { :a => 100, :b => 200 }
-      assert_equal 100, h1.delete(:a)
-      assert_equal Hash[:b => 200], h1
-    end
-
-    should "shift::" do
-      #   removes a key-value pair from the hash and returns it as a two-item array (or
-      #   the hash's default value, if it's empty)
-      h = { 1 => 'a', 2 => 'b', 3 => 'c'}
-      item = h.shift
-      assert_equal [1,'a'], item
-      assert_equal(({2 => 'b', 3 => 'c'}), h)
-    end
-
-    should "symbolize_keys:: also called to_options:: " do
-      #   Return a new hash with all keys converted to symbols.
-      foo = { 'name' => 'Gavin', 'wife' => :Lisa }
-      assert_equal(({ :name => 'Gavin', :wife => :Lisa }), foo.symbolize_keys)
-    end
-
-    should "stringify_keys::" do
-      #   Return a new hash with all keys converted to strings.
-      foo = { :name => 'Gavin', :wife => :Lisa }
-      assert_equal(({ 'name' => 'Gavin', 'wife' => :Lisa }), foo.stringify_keys)
-
-    end
-
-    should "diff::" do
-      #   creates a hash with key/value pairs that are in one hash but not in the other
-      a = {:a => :b, :c => :d}
-      b = {:e => :f, :c => :d}
-      assert_equal( ({:e => :f, :a => :b}), a.diff(b))
-    end
-
-    should "assert_valid_keys::" do
-      #   raises an ArgumentError if the hash contains keys not in the argument list. Used
-      #   to ensure only valid options are provided to a keyword-argument-based function
-    end
-
-    should "slice:: except::" do
-      #   slice returns a new hash with only the keys specified. except returns a hash
-      #   without the specified keys
-      options = {:a => 3, :b => 4, :c => 5}
-      assert_equal Hash[:c => 5, :a => 3], options.slice(:a,:c)
-      assert_equal Hash[:c => 5, :b => 4], options.except(:a)
-    end
-
-    should "dup:: variable assignment" do
-      #   Produces a shallow copy of obj (the instance variables of obj are copied, but
-      #   not the objects they reference).
-      original = { :a => 1, :b => 2 }
-      dupped = original.dup # original will not be modified by operations on dupped
-      second_dupped = dupped
-      second_dupped.delete(:a) # also deletes in dupped
-
-      assert_same_elements( {:b => 2}, second_dupped, "second_dupped" )
-      assert_same_elements( {:b => 2 }, dupped, "dupped" )
-      assert_same_elements( {:a => 1, :b => 2 }, original, "original" )
-
-      empty_original = {}
-      empty_dupped = empty_original.dup
-      second_empty_dupped = empty_dupped
-      second_empty_dupped[:b] = 2 # also inserts in empty_dupped
-
-      assert_same_elements( {:b => 2}, second_empty_dupped, "second_empty_dupped" )
-      assert_same_elements( {:b => 2 }, empty_dupped, "empty_dupped" )
-      assert_same_elements( {}, empty_original, "empty_original" )
-    end
   
-    should "collect::" do
-      #   converts the hash to an array
-      hash = {:a => 1, :b => 2}
-      assert_same_elements [[:a,1], [:b,2]], hash.collect { |pair| pair }
-      assert_same_elements [[:a,1], [:b,2]], hash.collect { |key, value| [key,value] }
-
-      converted_array = *hash
-      assert_same_elements [[:a,1], [:b,2]], converted_array
-    end
-
-    should "Hash#sort::" do
-      # converts the hash into an array of two-element arrays and calls
-      # Array#sort::
-      hash = { :a => 5, :b => 3}
-      assert_equal [[:b,3],[:a,5]], hash.sort { |first, second| first[1] <=> second[1] } # first == [:a,3]
-
-
-      #   When called without a block, it sorts by keys.
-      hash = { 'a' => 5, 'b' => 3}
-      assert_equal [['a',5],['b',3]], hash.sort
-
-      hash = { :a => 3, :b => 5}
-      assert_raise NoMethodError do
-        hash.sort # undefined method <=> for symbol
-      end
-    end
-  end
 
   context "String:" do
     should "concatenate: <<::" do
@@ -1372,8 +1087,12 @@ termina_con_esto
     should "enum_for:: AKA to_enum::" do
       # Create a new enumerator instance. You can choose between each_slice, each_cons and
       # each_with_index.
+      # Useful when you want to chain an enumerator with .collect or .map
       assert_equal %w( x0 y1 z2 ),
         %w( x y z).enum_for(:each_with_index).map {|letter, index| letter + index.to_s }
+      assert_raise LocalJumpError do
+        %w( x y z).each_with_index.map {|letter, index| letter + index.to_s }
+      end
 
     end
 
@@ -1776,7 +1495,8 @@ class ViewsTest < ActionView::TestCase
       assert_equal '<div class="active">Hello World</div>', html
 
 
-      # Using a block - notice collect:: is not the same as each::
+      # Using a block - notice collect:: is not the same as each:: - Cannot convert String into Array
+      # Use the content tag as a block
       html = content_tag :div do
         ['a','b','c'].collect { |letter| content_tag(:scan, letter) }
       end

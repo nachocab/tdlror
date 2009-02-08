@@ -114,6 +114,12 @@ class RubyExperimentTest < ActiveSupport::TestCase
       assert_equal 3, "así".mb_chars.length
     end
 
+    should "Regexp.new::" do
+      capital1 = Regexp.new(/[a-z]+/i)
+      capital2 = Regexp.new('[a-z]+', Regexp::IGNORECASE)
+      assert_equal %w(Hola), "Hola".scan(capital1)
+      assert_equal %w(Hola), "Hola".scan(capital2)
+    end
     # ActiveSupport::Multibyte::Chars
     should "normalize::" do
       # Unicode Normalization Forms
