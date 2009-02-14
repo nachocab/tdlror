@@ -1,281 +1,312 @@
 require 'test_helper'
 
 class ArrayTest < ActiveSupport::TestCase
-  # -
-  #     Array difference
-  #
-  # &
-  #     Set intersection
-  #
-  # *
-  #     Repetition
-  #
-  # [] slice slice!
-  #     Element reference
-  #
-  # []
-  #     New Array
-  #
-  # []=
-  #     Element assignment
-  #
-  # |
-  #     Set Union
-  #
-  # +
-  #     Concatenation
-  #
-  # << push
-  #     Append. can be chained with other appends.
-  #
-  # <=>
-  #     Comparison
-  #
-  # ==
-  #     Equality
-  #
-  # abbrev (NOT VERY USEFUL)
-  #     Calculates the set of unambiguous abbreviations for the strings in self
-  #
-  # all?    (Enumerable)
-  #
-  #
-  # any?    (Enumerable)
-  #
-  #
-  # assoc (USEFUL AND NOT USED)
-  #     Searches through an array whose elements are also arrays. Compares ARG
-  #     with the first element of each contained array and returns the first
-  #     that matches.
-  #
-  # rassoc (USEFUL AND NOT USED)
-  #     Searches through the array whose elements are also arrays. Compares ARG
-  #     with the second element of each contained array and returns the
-  #     first that matches
-  #
-  # at
-  #     Returns the element at ARG.
-  #
-  # fetch (NOT VERY USEFUL)
-  #     Tries to return the element at position index. Raises errors and
-  #     modifies return value. It's an at:: improved.
-  #     a.fetch(4) { |i| i*i }   #=> 16
-  #
-  # clear
-  #     Empties array
-  #
-  # collect map collect! map!
-  #
-  #     Invokes block once for each element of self. Creates a new array
-  #     containing the values returned by the block.
-  #
-  # compact   compact!
-  #     Returns a copy of self with all nil elements removed.
-  #
-  # concat
-  #     Appends the elements in ARG to self.
-  #
-  # dclone
-  #     NOT DOCUMENTED
-  #
-  # delete
-  #     Deletes items from self that are equal to ARG.
-  #
-  # delete_at
-  #     Deletes element at the specified index
-  #
-  # delete_if
-  #     Deletes every element of self for which block evaluates to true.
-  #
-  # detect    (Enumerable)
-  #
-  #
-  # each
-  #     Calls block once for each element in self, passing that element as a parameter
-  #
-  # each_cons    (Enumerable)
-  #
-  #
-  # each_index
-  #     Same as Array#each, but passes the index of the element instead of the element itself.
-  #
-  # each_slice    (Enumerable)
-  #
-  #
-  # each_with_index    (Enumerable)
-  #
-  #
-  # empty?
-  #     Returns true if self array contains no elements.
-  #
-  # entries    (Enumerable)
-  #
-  #
-  # enum_cons    (Enumerable)
-  #
-  #
-  # enum_slice    (Enumerable)
-  #
-  #
-  # enum_with_index    (Enumerable)
-  #
-  #
-  # eql?
-  #     Returns true if array and other are the same object, or are both arrays with the same content
-  #
-  # fill (USEFUL AND NOT USED)
-  #     Set the elements of an array to a value (which can vary).
-  #
-  # find    (Enumerable)
-  #
-  #
-  # find_all    (Enumerable)
-  #
-  #
-  # first (USEFUL AND NOT USED)
-  #     Returns the first or the first ARG elements
-  #
-  # flatten   flatten!
-  #     Returns a one-dimensional array (recursive flattening)
-  #
-  # frozen?
-  #     Return true if this array is frozen
-  #
-  # grep    (Enumerable)
-  #
-  #
-  # hash
-  #     Compute a hash-code for this array
-  #
-  # include?
-  #     Returns true if the given object is present in self
-  #
-  # index
-  #     Returns the index of the first object in self equal to ARG
-  #
-  # rindex
-  #     Returns the index of the last object in self equal to ARG
-  #
-  # inject    (Enumerable)
-  #
-  #
-  # insert
-  #     Inserts values before index
-  #
-  # inspect
-  #     Create a printable version of array.
-  #
-  # join
-  #     Returns a string created by converting each element of the array to a
-  #     string, separated by sep.
-  #
-  # last (USEFUL AND NOT USED)
-  #     Returns the last or last n elements
-  #
-  # length size
-  #     Returns the number of elements in self.
-  #
-  # max    (Enumerable)
-  #
-  #
-  # member?    (Enumerable)
-  #
-  #
-  # min    (Enumerable)
-  #
-  #
-  # new
-  #     Creates new instance of array
-  #
-  # nitems (UNU)
-  #     Returns the number of non-nil elements in self
-  #
-  # pack
-  #     Packs the contents of arr into a binary sequence
-  #
-  # partition    (Enumerable)
-  #
-  #
-  # pop
-  #     Removes the last element from self and returns it,
-  #
-  # pretty_print
-  #     NOT_DOC
-  #
-  # pretty_print_cycle
-  #     NOT_DOC
-  #
-  #
-  # quote
-  #     NOT_DOC
-  #
-  #
-  # reject   reject!
-  #     Returns a new array containing the items in self for which
-  #     the block is not true.
-  #
-  # replace (USEFUL AND NOT USED) initialize_copy
-  #     Replaces the contents of self with the contents of array ARG.
-  #
-  # reverse   reverse!
-  #     Returns a new array containing self‘s elements in reverse order.
-  #
-  # reverse_each (UNU)
-  #     Same as Array#each, but traverses self in reverse order.
-  #
-  #
-  # select
-  #     Invokes the block passing in successive elements from array, returning
-  #     an array containing those elements for which the
-  #     block returns a true value
-  #
-  # shift
-  #     Returns the first element of self and removes it
-  #
-  # unshift
-  #     Prepends objects to the front of array.
-  #
-  # sort   sort!
-  #     Returns a new array created by sorting self.
-  #
-  # sort_by    (Enumerable)
-  #
-  #
-  # to_a
-  #     Returns self. If called on a subclass of Array, converts the receiver
-  #     to an Array object.
-  #
-  # to_ary
-  #     Returns self.
-  #
-  # to_s
-  #     Returns self.join
-  #
-  # to_set    (Enumerable)
-  #
-  #
-  # to_yaml
-  #     ND
-  #
-  # transpose
-  #     Assumes that self is an array of arrays and transposes the
-  #     rows and columns.
-  #
-  # uniq   uniq!
-  #     Returns a new array by removing duplicate values in self.
-  #
-  #
-  # values_at  indexes(DON'T USE) indices(DON'T USE)
-  #     Returns an array containing the elements in self corresponding
-  #     to the given ARG (indexes)
-  #
-  # yaml_initialize
-  #     ND
-  #
-  # zip
-  #     Converts any arguments to arrays, then merges elements of self with
-  #     corresponding elements from each argument
-  #
+=begin
+-
+   Array difference
+
+&
+   Set intersection
+
+*
+   Repetition
+
+[] slice slice!
+   Element reference
+
+[]
+   New Array
+
+[]=
+   Element assignment
+
+|
+   Set Union
+
++
+   Concatenation
+
+<< push
+   Append. can be chained with other appends.
+
+<=>
+   Comparison
+
+==
+   Equality
+
+abbrev (NOT VERY USEFUL)
+   Calculates the set of unambiguous abbreviations for the strings in self
+
+all?    (Enumerable)
+
+
+any?    (Enumerable)
+
+
+assoc (USEFUL AND NOT USED)
+   Searches through an array whose elements are also arrays. Compares ARG
+   with the first element of each contained array and returns the first
+   that matches.
+
+rassoc (USEFUL AND NOT USED)
+   Searches through the array whose elements are also arrays. Compares ARG
+   with the second element of each contained array and returns the
+   first that matches
+
+at
+   Returns the element at ARG.
+
+fetch (NOT VERY USEFUL) see at::
+   Tries to return the element at position index. Raises errors and
+   modifies return value. It's an at:: improved.
+   a.fetch(4) { |i| i*i }   #=> 16
+
+clear
+   Empties array
+
+collect map collect! map!
+
+   Invokes block once for each element of self. Creates a new array
+   containing the values returned by the block.
+
+compact   compact!
+   Returns a copy of self with all nil elements removed.
+
+concat
+   Appends the elements in ARG to self.
+
+dclone
+   NOT DOCUMENTED
+
+delete
+   Deletes items from self that are equal to ARG.
+
+delete_at
+   Deletes element at the specified index
+
+delete_if
+   Deletes every element of self for which block evaluates to true.
+
+detect    (Enumerable)
+
+
+each
+   Calls block once for each element in self, passing that element as a parameter
+
+each_cons    (Enumerable)
+
+
+each_index
+   Same as Array#each, but passes the index of the element instead of the element itself.
+
+each_slice    (Enumerable)
+
+
+each_with_index    (Enumerable)
+
+
+empty?
+   Returns true if self array contains no elements.
+
+entries    (Enumerable)
+
+
+enum_cons    (Enumerable)
+
+
+enum_slice    (Enumerable)
+
+
+enum_with_index    (Enumerable)
+
+
+eql?
+   Returns true if array and other are the same object, or are both arrays with the same content
+
+fill (USEFUL AND NOT USED)
+   Set the elements of an array to a value (which can vary).
+
+find    (Enumerable)
+
+
+find_all    (Enumerable)
+
+
+first (USEFUL AND NOT USED)
+   Returns the first or the first ARG elements
+
+flatten   flatten!
+   Returns a one-dimensional array (recursive flattening)
+
+frozen?
+   Return true if this array is frozen
+
+grep    (Enumerable)
+
+
+hash
+   Compute a hash-code for this array
+
+include?
+   Returns true if the given object is present in self
+
+index
+   Returns the index of the first object in self equal to ARG
+
+rindex
+   Returns the index of the last object in self equal to ARG
+
+inject    (Enumerable)
+
+
+insert
+   Inserts values before index
+
+inspect
+   Create a printable version of array.
+
+join
+   Returns a string created by converting each element of the array to a
+   string, separated by sep.
+
+last (USEFUL AND NOT USED)
+   Returns the last or last n elements
+
+length size
+   Returns the number of elements in self.
+
+max    (Enumerable)
+
+
+member?    (Enumerable)
+
+
+min    (Enumerable)
+
+
+new
+   Creates new instance of array
+
+nitems (UNU)
+   Returns the number of non-nil elements in self
+
+pack
+   Packs the contents of arr into a binary sequence
+
+partition    (Enumerable)
+
+
+pop
+   Removes the last element from self and returns it,
+
+pretty_print
+   NOT_DOC
+
+pretty_print_cycle
+   NOT_DOC
+
+
+quote
+   NOT_DOC
+
+
+reject   reject!
+   Returns a new array containing the items in self for which
+   the block is not true.
+
+replace (USEFUL AND NOT USED) initialize_copy
+   Replaces the contents of self with the contents of array ARG.
+
+reverse   reverse!
+   Returns a new array containing self‘s elements in reverse order.
+
+reverse_each (UNU)
+   Same as Array#each, but traverses self in reverse order.
+
+
+select
+   Invokes the block passing in successive elements from array, returning
+   an array containing those elements for which the
+   block returns a true value
+
+shift
+   Returns the first element of self and removes it
+
+unshift
+   Prepends objects to the front of array.
+
+sort   sort!
+   Returns a new array created by sorting self.
+
+sort_by    (Enumerable)
+
+
+to_a
+   Returns self. If called on a subclass of Array, converts the receiver
+   to an Array object.
+
+to_ary
+   Returns self.
+
+to_s
+   Returns self.join
+
+to_set    (Enumerable)
+
+
+to_yaml
+   ND
+
+transpose
+   Assumes that self is an array of arrays and transposes the
+   rows and columns.
+
+uniq   uniq!
+   Returns a new array by removing duplicate values in self.
+
+
+values_at  indexes(DON'T USE) indices(DON'T USE)
+   Returns an array containing the elements in self corresponding
+   to the given ARG (indexes)
+
+yaml_initialize
+   ND
+
+zip
+   Converts any arguments to arrays, then merges elements of self with
+   corresponding elements from each argument
+=end
+
+  should "Array#delete_if::" do
+    arr = [1,2,3]
+    arr.delete_if { |num| num > 2 }
+    assert_equal [1,2], arr
+
+    # with repeated members
+    arr = [1,1,2,1,3,2,2,3]
+    arr.delete_if { |num| num > 2 }
+    assert_same_elements [1,1,1,2,2,2], arr
+
+  end
+  should "Array#select::" do
+    # to have select! use reject { not yield }
+    arr = [1,2,3]
+    assert_equal [1,2], arr.select { |num| num <= 2 }
+    # but
+    assert_equal [1,2,3], arr
+
+
+  end
+
+  should "slice:: slice!::" do
+    a = [1,2,3] 
+    assert_equal a[0], a.slice(0)
+
+    b = [:a, {:b => :c, :d => {:e => 'f'}} ]
+    assert_equal :a, b.slice!(0)
+    assert_equal Hash[:b => :c, :d => {:e => 'f'}], b.slice!(0)
+  end
 
   should "assoc:: rassoc::" do
     #assoc::
@@ -302,13 +333,23 @@ class ArrayTest < ActiveSupport::TestCase
   end
 
   should "Array#&:: |:: -::" do
-    # a & b - Intersection
+    # a & b - Intersection - elements in both "a" and "b"
     # a | b - Union
     # a - b - Difference
     assert_equal [1,2],     [1,2,3] & [1,2,4]
     assert_equal [1,2,3,4], [1,2,3] | [1,2,4]
     assert_equal [3],       [1,2,3] - [1,2]
     # xor a or b, but not both ( (a|b) - (a&b) )
+
+    # With repetition
+    assert_equal [2],     [1,1,1,2] - [1]   # removes all repeated elements
+    assert_equal [1,1,1], [1,1,1,2] - [2]
+
+    assert_equal [1,2],   [1,1,1,2] | [1]   # removes all repeated elements
+    assert_equal [1,2],   [1,1,1,2] | [2]   # removes all repeated elements
+
+    assert_equal [1],     [1,1,1,2] & [1,1] # removes all repeated elements
+    assert_equal [1,2],   [1,1,1,2] & [1,2] # removes all repeated elements
   end
 
   should "unshift:: shift:: pop:: push::" do
@@ -344,6 +385,7 @@ class ArrayTest < ActiveSupport::TestCase
     assert_equal "a-b-c", %w(a b c) * "-", "see the splat operator"
     assert_equal "A-B-C", %w(a b c).collect{ |letra| letra.upcase! }.join("-")
   end
+
 
   should "to_sentence::" do
     assert_equal "Luis, Juan y Pedro", %w(Luis Juan Pedro).to_sentence(:connector => 'y', :skip_last_comma => true)

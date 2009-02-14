@@ -8,10 +8,42 @@ class HashTest < ActiveSupport::TestCase
     setup do
       @vehicles_hash = { :cars => 36, :boats => 8, :trains => 12, :planes => 21 }
     end
+
+    should "initialize::" do
+      # Hash doesn't use an initialize method like Array does
+      class SubHashWrong < Hash
+        def initialize(arg)
+          super
+        end
+      end
+
+      empty_hash = {}
+      assert_equal empty_hash, SubHashWrong.new(:a => 3)
+
+      class SubHashRight < Hash
+        def initialize(args = nil)
+          super()
+          update(args)
+        end
+      end
+      assert_equal Hash[:a => 3], SubHashRight.new(:a => 3)
+    end
+
+    should "[]::" do
+      # convert even arguments to hash
+      hash = Hash['a',2,'b',4]
+      assert_equal( {'a' => 2, 'b' => 4}, hash )
+    end
+
     should "hash#delete_if" do
       hash = { :a => 3 , :b => 5, :c => ""}
-      aux = hash.delete_if { |key, value| value.blank? }
+      hash.delete_if { |key, value| value.blank? }
       assert_equal Hash[:a => 3 , :b => 5], hash
+
+      #if you don't want to modify the original
+      hash = { :a => 3 , :b => 5, :c => ""}
+      aux = hash.clone.delete_if { |key, value| value.blank? }
+      assert_equal Hash[:a => 3 , :b => 5], aux
     end
     should "select::" do
       #   Returns a new ARRAY consisting of [key,value] pairs for which the block returns
@@ -47,10 +79,17 @@ class HashTest < ActiveSupport::TestCase
 
     should "reverse_merge::" do
       #   Merges the left into the right
-      h1 = {:a => 100, :b => 200}
-      h2 = {:b => 300, :c => 400}
+      h1 = {:a => 'max', :b => 'average'}
+      h2 = {:b => 'regular', :c => 'min'}
       h3 = h1.reverse_merge(h2)
-      assert_equal Hash[ :a => 100, :b => 200, :c => 400 ], h3
+      assert_equal Hash[ :a => 'max', :b => 'average', :c => 'min' ], h3
+
+      # Useful if you want to guarantee a default value gets set
+      h1 = {:a => 'max'}              # If b isn't present, it will equal 'regular'
+      h2 = {:b => 'regular', :c => 'min'}
+      h3 = h1.reverse_merge(h2)
+      assert_equal Hash[ :a => 'max', :b => 'regular', :c => 'min' ], h3
+
     end
 
     should "merge:: update::" do
@@ -101,10 +140,12 @@ class HashTest < ActiveSupport::TestCase
     end
 
     should "slice:: except::" do
-      #   slice returns a new hash with only the keys specified. except returns a hash
-      #   without the specified keys
+      #   slice returns a new hash with only the keys specified.
+      #   except returns a new hash without the specified keys
       options = {:a => 3, :b => 4, :c => 5}
+      
       assert_equal Hash[:c => 5, :a => 3], options.slice(:a,:c)
+
       assert_equal Hash[:c => 5, :b => 4], options.except(:a)
     end
 

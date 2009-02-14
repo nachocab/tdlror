@@ -14,6 +14,12 @@ class RubyTest < ActiveSupport::TestCase
     should "Parallel assignment" do
       # Any assignment expression that has more than one l-value or r-value.
 
+      a = 3
+      b = [3]
+      c = [3,4]
+      assert_equal [3], [*a]
+      assert_equal [3], [*b]
+      assert_equal [3,4], [*c]
       # One l-value, multiple r-values
       x = 1,2,3
       assert_equal x, [1,2,3]
@@ -221,7 +227,34 @@ class RubyTest < ActiveSupport::TestCase
       when 'a','b'
         'yes'
       end
-      assert_equal 'yes', b
+      assert_equal 'yes', b, "You can assign the result of a case structure directly"
+
+      empty = nil
+      res = case empty
+      when nil
+        3
+      when blank?
+        # WRONG: "empty" will never equal "blank?"
+      else
+        4
+      end
+      assert_equal 3, res
+
+      arg = "H"
+      case arg
+      when Array
+      when String then arg.downcase!
+      when :start
+      when :end then -1
+      when /[a-z]/
+      end
+      assert_equal "h", arg, "Using case with then"
+
+      case
+      when 1 == 1
+        a = 3
+      end
+      assert_equal a, 3, "case with no argument"
     end
   end
 
@@ -289,6 +322,9 @@ class RubyTest < ActiveSupport::TestCase
       vehicles_nested = [[:planes, 21], [:cars, 36]] # same as vehicles_hash.to_a
       vehicles_hash_unnested = Hash[*vehicles_nested.flatten]
       assert_equal({ :planes => 21, :cars => 36 }, vehicles_hash_unnested)
+
+      assert_equal [:planes, 21, :cars, 36], [*vehicles_nested.flatten]
+      assert_equal [:planes, 21, :cars, 36], vehicles_nested.flatten #WRONG - produces an error when converting to hash
 
       # 4 - Convert Hash to array by exploding hash. Not a good idea. Better use to_a
       vehicles_array = *{ :planes => 21, :cars => 36 }
@@ -702,6 +738,32 @@ termina_con_esto
 
       assert_false foo { |bar| bar.is_two? 3 }
       assert       foo { |bar| bar.is_two? 2 }
+
+      #[1,2,3].select
+      #      def select
+      #        ary = []
+      #        each do |item|
+      #          if yield(item)
+      #            ary << item
+      #          end
+      #        end
+      #        ary
+      #      end
+
+      Array.class_eval do
+        def select_words1
+          if block_given?
+            self.select { |word, frequency| yield(word, frequency) }.collect { |word, frequency| word }
+          end
+        end
+        def select_words2(&block)
+          if block
+            self.select(&block).collect { |word, frequency| word }
+          end
+        end
+      end
+      assert_equal ["a"], [["a",2],["b",1]].select_words1 { |word, freq| freq == 2 }
+      assert_equal ["a"], [["a",2],["b",1]].select_words2 { |word, freq| freq == 2 }
     end
 
     should "a block refers to outer variables, not inner" do
@@ -718,7 +780,7 @@ termina_con_esto
 
     should "&:: creates procs implicitely. It converts Blocks into Procs and viceversa" do
       def convert_block_to_proc(&block)# The unary ampersand operator
-        block
+        block #now it's a proc
       end
 
       external_proc = convert_block_to_proc { |x|  x > 3 }
@@ -754,7 +816,9 @@ termina_con_esto
       assert_equal 6, my_proc[3]
     end
 
-
+    should "not passsing variables to blocks" do
+      assert_equal [:a,:b], {:a => 3, :b => 5}.collect { |letter, _| letter }
+    end
       
     should "Proc:: Pass a Proc as an argument" do
       #   Calling a proc is like yielding to a block
@@ -872,12 +936,13 @@ termina_con_esto
 
   context "Iterators" do
     should "Array.map:: also called Enum.collect::" do
-      #   Returns a new array with the results of running the block for each element.
+      #   Wraps the elements generated inside the block into an Array.
 
       assert_equal [1,4,9], [1,2,3].collect { |x| x*x }, "Array"
       assert_equal [2,4,6], (1..3).collect { |x| x*2 }, "Range"
-      assert_equal [2,3,4], [1,2,3].collect(&:succ)
+      assert_equal [2,3,4], [1,2,3].collect(&:succ) # calls .method(:succ)
 
+      assert_equal [[2],[2],[2]], [1,2,3].collect { |x| [2] }, "Array"
       #   DO NOT CONFUSE WITH each:: "each" returns the original array, "collect" returns
       #   the resulting array
       assert_equal [1,4,9], [1,2,3].collect { |x| x*x }, "Array"
@@ -889,12 +954,14 @@ termina_con_esto
       hash #you can assign the hash directly to collect because in this case it will return 1's and 2's
       assert_same_elements( {'a' => 2, 'b' => 2, 'c' => 1}, hash )
 
-      #   There's only an index variable in each, not in collect
       nested_array = [[1,:a],[2, :b],[3, :c]]
       ret = nested_array.collect { |number, letter|
         true
       }
       assert ret
+
+      #repeated numbers
+      assert_equal [1,2,1,1,2], [1,2,1,1,2].select{ |x| x }.collect{ |x| x }
 
     end
 
@@ -958,15 +1025,9 @@ termina_con_esto
       assert_equal 8, add
     end
 
-    should "Array#delete_if::" do
-      arr = [1,2,3]
-      arr.delete_if { |num| num > 2 }
-      assert_equal [1,2], arr
-    end
+    
   end
-
   
-
   context "String:" do
     should "concatenate: <<::" do
       # #It's better to append than to build new ones
@@ -1141,6 +1202,37 @@ termina_con_esto
 
   context "Object" do
 
+    should "returning::" do
+      def boo
+        a = []
+        a << 1
+        a << 2
+        a
+      end
+      def ole
+        returning a = [] do
+          a << 1
+          a << 2
+        end
+      end
+      def ole2
+        returning [] do |a|
+          a << 1
+          a << 2
+        end
+      end
+      def ole3
+        returning [] do |a|
+          [1,2].each { |i| a << i }
+        end
+      end
+
+      assert_equal [1,2], boo
+      assert_equal [1,2], ole
+      assert_equal [1,2], ole2
+      assert_equal [1,2], ole3
+    end
+
     should "clone::" do
       # This duplication doesn't happen with numbers
       # (I think it's only classes and methods)
@@ -1308,6 +1400,15 @@ termina_con_esto
       assert_equal 3.14, Math::PI.round(2)
       assert_equal 3.142, Math::PI.round(3)
     end
+
+    should "step::" do
+      # num.step(limit, step ) {|i| block } => num
+      # creates a seq of numbers starting at num, incremented by step until limit
+      # on each call to the block
+      a = ""
+      1.step(10,2) { |i| a << i.to_s }
+      assert_equal "13579", a
+    end
   end
 
   context "Reflections & Bindings" do
@@ -1348,7 +1449,6 @@ termina_con_esto
       # parameters supply a filename and starting line number for compilation errors.
 
       class Klass
-        :attr_accessor
         def initialize
           @secret = 99
         end
